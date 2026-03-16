@@ -1,0 +1,16 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: credit-service
+  datasource:
+    url: jdbc:postgresql://localhost:5435/bank_credit
+    username: bank
+    password: bank_secret
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  kafka:
+    bootstrap-servers: localhost:9094
