@@ -1,0 +1,18 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: client-bff
+  datasource:
+    url: jdbc:postgresql://localhost:5436/bank_client_bff
+    username: bank
+    password: bank_secret
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  data:
+    redis:
+      host: localhost
+      port: 6379
