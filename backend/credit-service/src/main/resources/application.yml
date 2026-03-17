@@ -12,5 +12,14 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-  kafka:
-    bootstrap-servers: localhost:9094
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+services:
+  core-service:
+    url: http://localhost:8080
+
+credit:
+  payment-schedule: "0 0 0 * * *"
