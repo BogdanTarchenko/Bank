@@ -5,7 +5,7 @@ spring:
   application:
     name: core-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/bank_core
+    url: jdbc:postgresql://localhost:5438/bank_core
     username: bank
     password: bank_secret
     driver-class-name: org.postgresql.Driver
