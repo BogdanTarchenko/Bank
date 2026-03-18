@@ -2,6 +2,7 @@ import SwiftUI
 import BankShared
 
 struct EmployeeTariffListView: View {
+    @EnvironmentObject private var container: EmployeeDependencyContainer
     @State private var viewModel: TariffListViewModel?
 
     var body: some View {
@@ -43,7 +44,7 @@ struct EmployeeTariffListView: View {
             .task {
                 if viewModel == nil {
                     viewModel = TariffListViewModel(
-                        useCase: TariffManagementUseCase(client: HTTPClient(baseURL: EmployeeConfiguration.bffBaseURL))
+                        useCase: container.tariffUseCase
                     )
                 }
                 await viewModel?.load()

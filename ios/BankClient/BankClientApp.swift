@@ -3,23 +3,25 @@ import BankShared
 
 @main
 struct BankClientApp: App {
-    @StateObject private var authManager = AuthManager(config: ClientConfiguration.auth)
+    @StateObject private var container = DependencyContainer()
     @State private var appState = AppState()
-    @State private var httpClient = HTTPClient(baseURL: ClientConfiguration.bffBaseURL)
 
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(authManager)
+                .environmentObject(container)
+                .environmentObject(container.authManager)
                 .environment(appState)
                 .preferredColorScheme(appState.preferredColorScheme)
                 .task {
-                    await httpClient.setTokenProvider { [weak authManager] in
-                        await authManager?.getAccessToken()
+                    await container.setup()
+                    // Restore userId on app launch
+                    if let userId = container.authManager.userId {
+                        appState.currentUserId = userId
                     }
-                    await httpClient.setOnUnauthorized { [weak authManager] in
-                        await authManager?.logout()
-                    }
+                }
+                .onChange(of: container.authManager.userId) { _, newValue in
+                    appState.currentUserId = newValue
                 }
         }
     }

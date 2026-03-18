@@ -3,23 +3,24 @@ import BankShared
 
 @main
 struct BankEmployeeApp: App {
-    @StateObject private var authManager = AuthManager(config: EmployeeConfiguration.auth)
+    @StateObject private var container = EmployeeDependencyContainer()
     @State private var appState = EmployeeAppState()
-    @State private var httpClient = HTTPClient(baseURL: EmployeeConfiguration.bffBaseURL)
 
     var body: some Scene {
         WindowGroup {
             EmployeeRootView()
-                .environmentObject(authManager)
+                .environmentObject(container)
+                .environmentObject(container.authManager)
                 .environment(appState)
                 .preferredColorScheme(appState.preferredColorScheme)
                 .task {
-                    await httpClient.setTokenProvider { [weak authManager] in
-                        await authManager?.getAccessToken()
+                    await container.setup()
+                    if let userId = container.authManager.userId {
+                        appState.currentUserId = userId
                     }
-                    await httpClient.setOnUnauthorized { [weak authManager] in
-                        await authManager?.logout()
-                    }
+                }
+                .onChange(of: container.authManager.userId) { _, newValue in
+                    appState.currentUserId = newValue
                 }
         }
     }

@@ -2,6 +2,7 @@ import SwiftUI
 import BankShared
 
 struct SettingsView: View {
+    @EnvironmentObject private var container: DependencyContainer
     @EnvironmentObject private var authManager: AuthManager
     @Environment(AppState.self) private var appState
     @State private var viewModel: SettingsViewModel?
@@ -46,10 +47,11 @@ struct SettingsView: View {
             }
             .navigationTitle("Настройки")
             .task {
+                guard let userId = appState.currentUserId else { return }
                 if viewModel == nil {
                     viewModel = SettingsViewModel(
-                        useCase: SettingsUseCase(client: HTTPClient(baseURL: ClientConfiguration.bffBaseURL)),
-                        userId: 1
+                        useCase: container.settingsUseCase,
+                        userId: userId
                     )
                 }
                 await viewModel?.load()

@@ -2,7 +2,9 @@ import SwiftUI
 import BankShared
 
 struct ProfileView: View {
+    @EnvironmentObject private var container: DependencyContainer
     @EnvironmentObject private var authManager: AuthManager
+    @Environment(AppState.self) private var appState
     @State private var viewModel: ProfileViewModel?
 
     var body: some View {
@@ -59,12 +61,12 @@ struct ProfileView: View {
             }
             .navigationTitle("Профиль")
             .task {
+                guard let userId = appState.currentUserId else { return }
                 if viewModel == nil {
-                    let client = HTTPClient(baseURL: ClientConfiguration.bffBaseURL)
                     viewModel = ProfileViewModel(
-                        userUseCase: UserUseCase(client: client),
-                        creditUseCase: CreditUseCase(client: client),
-                        userId: 1
+                        userUseCase: container.userUseCase,
+                        creditUseCase: container.creditUseCase,
+                        userId: userId
                     )
                 }
                 await viewModel?.load()

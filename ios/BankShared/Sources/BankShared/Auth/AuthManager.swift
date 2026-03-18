@@ -9,11 +9,15 @@ public final class AuthManager: ObservableObject {
 
     @Published public var accessToken: String?
     @Published public var isAuthenticated = false
+    @Published public var userId: Int64?
 
     public init(config: any AuthConfiguration) {
         self.config = config
         self.keychain = KeychainHelper(service: config.clientId)
         self.accessToken = keychain.get("access_token")
+        if let savedId = keychain.get("user_id"), let id = Int64(savedId) {
+            self.userId = id
+        }
         self.isAuthenticated = accessToken != nil
     }
 
@@ -56,6 +60,7 @@ public final class AuthManager: ObservableObject {
 
         let tokenResponse = try await exchangeCode(code, codeVerifier: codeVerifier)
         saveTokens(tokenResponse)
+        try await fetchUserInfo()
     }
 
     public func register(request: RegisterRequest) async throws {
@@ -79,9 +84,25 @@ public final class AuthManager: ObservableObject {
         }
     }
 
+    public func fetchUserInfo() async throws {
+        guard let token = accessToken,
+              let url = URL(string: "\(config.authBaseURL)/userinfo") else { return }
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else { return }
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let sub = json["sub"] as? String, let id = Int64(sub) {
+            userId = id
+            keychain.save("\(id)", for: "user_id")
+        }
+    }
+
     public func logout() {
         keychain.deleteAll()
         accessToken = nil
+        userId = nil
         isAuthenticated = false
     }
 

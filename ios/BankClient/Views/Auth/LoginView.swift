@@ -2,12 +2,8 @@ import SwiftUI
 import BankShared
 
 struct LoginView: View {
-    @EnvironmentObject private var authManager: AuthManager
-    @State private var viewModel: AuthViewModel
-
-    init(authManager: AuthManager) {
-        _viewModel = State(initialValue: AuthViewModel(useCase: AuthUseCase(authManager: authManager)))
-    }
+    @EnvironmentObject private var container: DependencyContainer
+    @State private var viewModel: AuthViewModel?
 
     var body: some View {
         NavigationStack {
@@ -24,7 +20,7 @@ struct LoginView: View {
 
                 VStack(spacing: 16) {
                     Button {
-                        Task { await viewModel.login() }
+                        Task { await viewModel?.login() }
                     } label: {
                         Text("Войти")
                             .font(.headline)
@@ -34,7 +30,9 @@ struct LoginView: View {
                     .buttonStyle(.borderedProminent)
 
                     NavigationLink {
-                        RegisterView(viewModel: viewModel)
+                        if let viewModel {
+                            RegisterView(viewModel: viewModel)
+                        }
                     } label: {
                         Text("Регистрация")
                             .font(.headline)
@@ -45,7 +43,7 @@ struct LoginView: View {
                 }
                 .padding(.horizontal, 32)
 
-                if let error = viewModel.errorMessage {
+                if let error = viewModel?.errorMessage {
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(.red)
@@ -55,7 +53,12 @@ struct LoginView: View {
 
                 Spacer()
             }
-            .loadingOverlay(viewModel.isLoading)
+            .loadingOverlay(viewModel?.isLoading ?? false)
+            .task {
+                if viewModel == nil {
+                    viewModel = AuthViewModel(useCase: container.authUseCase)
+                }
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Credit: Codable, Identifiable, Sendable {
+public struct Credit: Codable, Identifiable, Hashable, Sendable {
     public let id: Int64
     public let userId: Int64
     public let accountId: Int64

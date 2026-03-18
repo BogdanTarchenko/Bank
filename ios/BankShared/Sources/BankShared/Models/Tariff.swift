@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Tariff: Codable, Identifiable, Sendable {
+public struct Tariff: Codable, Identifiable, Hashable, Sendable {
     public let id: Int64
     public let name: String
     public let interestRate: Decimal

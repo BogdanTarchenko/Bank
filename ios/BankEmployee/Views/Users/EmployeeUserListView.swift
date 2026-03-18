@@ -2,6 +2,7 @@ import SwiftUI
 import BankShared
 
 struct EmployeeUserListView: View {
+    @EnvironmentObject private var container: EmployeeDependencyContainer
     @State private var viewModel: UserListViewModel?
 
     var body: some View {
@@ -32,9 +33,7 @@ struct EmployeeUserListView: View {
             .refreshable { await viewModel?.load() }
             .task {
                 if viewModel == nil {
-                    viewModel = UserListViewModel(
-                        useCase: UserManagementUseCase(client: HTTPClient(baseURL: EmployeeConfiguration.bffBaseURL))
-                    )
+                    viewModel = UserListViewModel(useCase: container.userUseCase)
                 }
                 await viewModel?.load()
             }

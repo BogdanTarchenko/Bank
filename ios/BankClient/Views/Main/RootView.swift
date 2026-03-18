@@ -9,7 +9,7 @@ struct RootView: View {
             if authManager.isAuthenticated {
                 MainTabView()
             } else {
-                LoginView(authManager: authManager)
+                LoginView()
             }
         }
         .animation(.easeInOut, value: authManager.isAuthenticated)

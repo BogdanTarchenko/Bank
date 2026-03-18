@@ -2,6 +2,8 @@ import SwiftUI
 import BankShared
 
 struct AccountListView: View {
+    @EnvironmentObject private var container: DependencyContainer
+    @Environment(AppState.self) private var appState
     @State private var viewModel: AccountListViewModel?
 
     var body: some View {
@@ -59,11 +61,11 @@ struct AccountListView: View {
                 await viewModel?.load()
             }
             .task {
-                // TODO: get userId from AppState
+                guard let userId = appState.currentUserId else { return }
                 if viewModel == nil {
                     viewModel = AccountListViewModel(
-                        useCase: AccountUseCase(client: HTTPClient(baseURL: ClientConfiguration.bffBaseURL)),
-                        userId: 1
+                        useCase: container.accountUseCase,
+                        userId: userId
                     )
                 }
                 await viewModel?.load()

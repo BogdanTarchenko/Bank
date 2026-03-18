@@ -2,6 +2,7 @@ import SwiftUI
 import BankShared
 
 struct EmployeeSettingsView: View {
+    @EnvironmentObject private var container: EmployeeDependencyContainer
     @EnvironmentObject private var authManager: AuthManager
     @Environment(EmployeeAppState.self) private var appState
     @State private var viewModel: EmployeeSettingsViewModel?
@@ -44,10 +45,10 @@ struct EmployeeSettingsView: View {
             }
             .navigationTitle("Настройки")
             .task {
-                if viewModel == nil {
+                if viewModel == nil, let userId = authManager.userId {
                     viewModel = EmployeeSettingsViewModel(
-                        useCase: EmployeeSettingsUseCase(client: HTTPClient(baseURL: EmployeeConfiguration.bffBaseURL)),
-                        userId: 1
+                        useCase: container.settingsUseCase,
+                        userId: userId
                     )
                 }
                 await viewModel?.load()

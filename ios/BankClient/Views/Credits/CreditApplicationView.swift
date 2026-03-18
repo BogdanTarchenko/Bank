@@ -2,6 +2,8 @@ import SwiftUI
 import BankShared
 
 struct CreditApplicationView: View {
+    @EnvironmentObject private var container: DependencyContainer
+    @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel: CreditApplicationViewModel?
 
@@ -69,12 +71,12 @@ struct CreditApplicationView: View {
         }
         .navigationTitle("Оформление кредита")
         .task {
+            guard let userId = appState.currentUserId else { return }
             if viewModel == nil {
-                let client = HTTPClient(baseURL: ClientConfiguration.bffBaseURL)
                 viewModel = CreditApplicationViewModel(
-                    creditUseCase: CreditUseCase(client: client),
-                    accountUseCase: AccountUseCase(client: client),
-                    userId: 1
+                    creditUseCase: container.creditUseCase,
+                    accountUseCase: container.accountUseCase,
+                    userId: userId
                 )
             }
             await viewModel?.load()

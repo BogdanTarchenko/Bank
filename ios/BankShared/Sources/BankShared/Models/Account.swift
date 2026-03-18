@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Account: Codable, Identifiable, Sendable {
+public struct Account: Codable, Identifiable, Hashable, Sendable {
     public let id: Int64
     public let userId: Int64
     public let currency: Currency

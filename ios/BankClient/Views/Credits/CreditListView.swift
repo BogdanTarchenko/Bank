@@ -2,6 +2,8 @@ import SwiftUI
 import BankShared
 
 struct CreditListView: View {
+    @EnvironmentObject private var container: DependencyContainer
+    @Environment(AppState.self) private var appState
     @State private var viewModel: CreditListViewModel?
 
     var body: some View {
@@ -40,10 +42,11 @@ struct CreditListView: View {
             }
             .refreshable { await viewModel?.load() }
             .task {
+                guard let userId = appState.currentUserId else { return }
                 if viewModel == nil {
                     viewModel = CreditListViewModel(
-                        useCase: CreditUseCase(client: HTTPClient(baseURL: ClientConfiguration.bffBaseURL)),
-                        userId: 1
+                        useCase: container.creditUseCase,
+                        userId: userId
                     )
                 }
                 await viewModel?.load()
