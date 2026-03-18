@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres-credit:5432/bank_credit
+
+services:
+  core-service:
+    url: http://core-service:8080

@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres-employee-bff:5432/bank_employee_bff
+  data:
+    redis:
+      host: redis
+
+services:
+  core-service:
+    url: http://core-service:8080
+  user-service:
+    url: http://user-service:8082
+  credit-service:
+    url: http://credit-service:8083

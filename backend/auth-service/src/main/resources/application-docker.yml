@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres-auth:5432/bank_auth
+
+services:
+  user-service:
+    url: http://user-service:8082
