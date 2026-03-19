@@ -43,9 +43,15 @@ public class CreditService {
                     String.format("Срок кредита должен быть от %d до %d дней", tariff.getMinTermDays(), tariff.getMaxTermDays()));
         }
 
+        BigDecimal annualRate = tariff.getInterestRate()
+                .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
+        BigDecimal termFraction = BigDecimal.valueOf(request.termDays())
+                .divide(BigDecimal.valueOf(365), 10, RoundingMode.HALF_UP);
         BigDecimal totalWithInterest = request.amount()
-                .multiply(BigDecimal.ONE.add(tariff.getInterestRate().divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)));
-        BigDecimal dailyPayment = totalWithInterest.divide(BigDecimal.valueOf(request.termDays()), 2, RoundingMode.CEILING);
+                .multiply(BigDecimal.ONE.add(annualRate.multiply(termFraction)))
+                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal dailyPayment = totalWithInterest
+                .divide(BigDecimal.valueOf(request.termDays()), 2, RoundingMode.CEILING);
 
         Credit credit = Credit.builder()
                 .userId(request.userId())
@@ -63,11 +69,16 @@ public class CreditService {
 
         // Создаём расписание платежей
         LocalDateTime dueDate = LocalDateTime.now().plusDays(1);
+        BigDecimal paid = BigDecimal.ZERO;
         for (int i = 0; i < request.termDays(); i++) {
-            BigDecimal paymentAmount = (i == request.termDays() - 1)
-                    ? credit.getRemaining().subtract(dailyPayment.multiply(BigDecimal.valueOf(i)))
-                    : dailyPayment;
+            BigDecimal paymentAmount;
+            if (i == request.termDays() - 1) {
+                paymentAmount = totalWithInterest.subtract(paid);
+            } else {
+                paymentAmount = dailyPayment.min(totalWithInterest.subtract(paid));
+            }
             if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) break;
+            paid = paid.add(paymentAmount);
 
             Payment payment = Payment.builder()
                     .credit(credit)
