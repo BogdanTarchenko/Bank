@@ -20,7 +20,7 @@ final class AccountViewUseCase: Sendable {
         try await client.request(EmployeeAccountEndpoint.getByUserId(userId))
     }
 
-    func getOperations(accountId: Int64, page: Int = 0, size: Int = 20) async throws -> PageResponse<Operation> {
+    func getOperations(accountId: Int64, page: Int = 0, size: Int = 20) async throws -> PageResponse<BankShared.Operation> {
         try await client.request(EmployeeAccountEndpoint.operations(accountId: accountId, page: page, size: size))
     }
 }

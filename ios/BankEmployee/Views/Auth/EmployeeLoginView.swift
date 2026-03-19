@@ -13,7 +13,7 @@ struct EmployeeLoginView: View {
             VStack(spacing: 8) {
                 Image(systemName: "building.columns.fill")
                     .font(.system(size: 64))
-                    .foregroundStyle(.appPrimary)
+                    .foregroundStyle(Color.appPrimary)
                 Text("Bank Employee")
                     .font(.largeTitle.bold())
                 Text("Панель сотрудника")

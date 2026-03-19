@@ -63,7 +63,7 @@ private struct TariffRow: View {
                 Spacer()
                 Text("\(tariff.interestRate.formattedPlain())%")
                     .font(.title3.bold())
-                    .foregroundStyle(.appPrimary)
+                    .foregroundStyle(Color.appPrimary)
             }
             HStack(spacing: 16) {
                 if let min = tariff.minAmount, let max = tariff.maxAmount {

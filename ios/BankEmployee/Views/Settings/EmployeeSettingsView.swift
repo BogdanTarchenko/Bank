@@ -44,7 +44,7 @@ struct EmployeeSettingsView: View {
                 }
             }
             .navigationTitle("Настройки")
-            .task {
+            .task(id: authManager.userId) {
                 if viewModel == nil, let userId = authManager.userId {
                     viewModel = EmployeeSettingsViewModel(
                         useCase: container.settingsUseCase,
@@ -52,6 +52,9 @@ struct EmployeeSettingsView: View {
                     )
                 }
                 await viewModel?.load()
+                if let settings = viewModel?.settings {
+                    appState.applySettings(settings)
+                }
             }
         }
     }
