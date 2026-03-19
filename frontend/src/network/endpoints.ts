@@ -1,0 +1,46 @@
+const CLIENT_BFF = '/api/client'
+const EMPLOYEE_BFF = '/api/employee'
+
+export const endpoints = {
+  auth: {
+    register: '/auth/api/v1/auth/register',
+    token: '/auth/oauth2/token',
+    authorize: '/auth/oauth2/authorize',
+    userinfo: '/auth/userinfo',
+  },
+  client: {
+    accounts: `${CLIENT_BFF}/proxy/core/api/v1/accounts`,
+    account: (id: number) => `${CLIENT_BFF}/proxy/core/api/v1/accounts/${id}`,
+    deposit: (id: number) => `${CLIENT_BFF}/proxy/core/api/v1/accounts/${id}/deposit`,
+    withdraw: (id: number) => `${CLIENT_BFF}/proxy/core/api/v1/accounts/${id}/withdraw`,
+    operations: (id: number) => `${CLIENT_BFF}/proxy/core/api/v1/accounts/${id}/operations`,
+    transfers: `${CLIENT_BFF}/proxy/core/api/v1/transfers`,
+    masterAccount: `${CLIENT_BFF}/proxy/core/api/v1/master-account`,
+    credits: `${CLIENT_BFF}/proxy/credit/api/v1/credits`,
+    credit: (id: number) => `${CLIENT_BFF}/proxy/credit/api/v1/credits/${id}`,
+    creditPayments: (id: number) => `${CLIENT_BFF}/proxy/credit/api/v1/credits/${id}/payments`,
+    creditRepay: (id: number) => `${CLIENT_BFF}/proxy/credit/api/v1/credits/${id}/repay`,
+    tariffs: `${CLIENT_BFF}/proxy/credit/api/v1/tariffs`,
+    creditRating: (userId: number) => `${CLIENT_BFF}/proxy/credit/api/v1/users/${userId}/credit-rating`,
+    users: `${CLIENT_BFF}/proxy/user/api/v1/users`,
+    user: (id: number) => `${CLIENT_BFF}/proxy/user/api/v1/users/${id}`,
+    userByEmail: `${CLIENT_BFF}/proxy/user/api/v1/users/by-email`,
+    settings: `${CLIENT_BFF}/settings`,
+  },
+  employee: {
+    accounts: `${EMPLOYEE_BFF}/proxy/core/api/v1/accounts`,
+    account: (id: number) => `${EMPLOYEE_BFF}/proxy/core/api/v1/accounts/${id}`,
+    operations: (id: number) => `${EMPLOYEE_BFF}/proxy/core/api/v1/accounts/${id}/operations`,
+    masterAccount: `${EMPLOYEE_BFF}/proxy/core/api/v1/master-account`,
+    credits: `${EMPLOYEE_BFF}/proxy/credit/api/v1/credits`,
+    credit: (id: number) => `${EMPLOYEE_BFF}/proxy/credit/api/v1/credits/${id}`,
+    creditPayments: (id: number) => `${EMPLOYEE_BFF}/proxy/credit/api/v1/credits/${id}/payments`,
+    tariffs: `${EMPLOYEE_BFF}/proxy/credit/api/v1/tariffs`,
+    creditRating: (userId: number) => `${EMPLOYEE_BFF}/proxy/credit/api/v1/users/${userId}/credit-rating`,
+    users: `${EMPLOYEE_BFF}/proxy/user/api/v1/users`,
+    user: (id: number) => `${EMPLOYEE_BFF}/proxy/user/api/v1/users/${id}`,
+    userBlock: (id: number) => `${EMPLOYEE_BFF}/proxy/user/api/v1/users/${id}/block`,
+    userUnblock: (id: number) => `${EMPLOYEE_BFF}/proxy/user/api/v1/users/${id}/unblock`,
+    settings: `${EMPLOYEE_BFF}/settings`,
+  },
+} as const
