@@ -4,6 +4,13 @@ spring:
   data:
     redis:
       host: redis
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://auth-service:8081/oauth2/jwks
+  kafka:
+    bootstrap-servers: kafka:9092
 
 services:
   core-service:
