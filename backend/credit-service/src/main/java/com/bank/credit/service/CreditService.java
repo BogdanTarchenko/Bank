@@ -43,16 +43,26 @@ public class CreditService {
                     String.format("Срок кредита должен быть от %d до %d дней", tariff.getMinTermDays(), tariff.getMaxTermDays()));
         }
 
-        BigDecimal totalWithInterest = request.amount()
-                .multiply(BigDecimal.ONE.add(tariff.getInterestRate().divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)));
-        BigDecimal dailyPayment = totalWithInterest.divide(BigDecimal.valueOf(request.termDays()), 2, RoundingMode.CEILING);
+        BigDecimal dailyRate = tariff.getInterestRate()
+                .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)
+                .divide(BigDecimal.valueOf(365), 10, RoundingMode.HALF_UP);
+
+        BigDecimal dailyPayment;
+        if (dailyRate.compareTo(BigDecimal.ZERO) == 0) {
+            dailyPayment = request.amount()
+                    .divide(BigDecimal.valueOf(request.termDays()), 2, RoundingMode.CEILING);
+        } else {
+            double r = dailyRate.doubleValue();
+            double annuity = request.amount().doubleValue() * r / (1 - Math.pow(1 + r, -request.termDays()));
+            dailyPayment = BigDecimal.valueOf(annuity).setScale(2, RoundingMode.CEILING);
+        }
 
         Credit credit = Credit.builder()
                 .userId(request.userId())
                 .accountId(request.accountId())
                 .tariff(tariff)
                 .principal(request.amount())
-                .remaining(totalWithInterest)
+                .remaining(request.amount())
                 .interestRate(tariff.getInterestRate())
                 .termDays(request.termDays())
                 .dailyPayment(dailyPayment)
@@ -61,13 +71,23 @@ public class CreditService {
 
         credit = creditRepository.save(credit);
 
-        // Создаём расписание платежей
+        // Создаём расписание аннуитетных платежей с процентами на остаток
         LocalDateTime dueDate = LocalDateTime.now().plusDays(1);
+        BigDecimal remainingPrincipal = request.amount();
         for (int i = 0; i < request.termDays(); i++) {
-            BigDecimal paymentAmount = (i == request.termDays() - 1)
-                    ? credit.getRemaining().subtract(dailyPayment.multiply(BigDecimal.valueOf(i)))
-                    : dailyPayment;
+            BigDecimal interest = remainingPrincipal.multiply(dailyRate)
+                    .setScale(2, RoundingMode.HALF_UP);
+            BigDecimal paymentAmount;
+            if (i == request.termDays() - 1) {
+                paymentAmount = remainingPrincipal.add(interest);
+            } else {
+                paymentAmount = dailyPayment;
+            }
             if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) break;
+
+            BigDecimal principalPortion = paymentAmount.subtract(interest);
+            remainingPrincipal = remainingPrincipal.subtract(principalPortion)
+                    .max(BigDecimal.ZERO);
 
             Payment payment = Payment.builder()
                     .credit(credit)
@@ -113,17 +133,15 @@ public class CreditService {
 
         BigDecimal repayAmount = request.amount().min(credit.getRemaining());
 
-        // Списываем со счёта клиента
         coreServiceClient.withdrawFromAccount(credit.getAccountId(), repayAmount);
 
         credit.setRemaining(credit.getRemaining().subtract(repayAmount));
 
-        // Закрываем ожидающие платежи на сумму погашения
-        BigDecimal remainingRepay = repayAmount;
         List<Payment> pendingPayments = paymentRepository.findByCreditIdOrderByDueDateAsc(creditId).stream()
                 .filter(p -> p.getStatus() == PaymentStatus.PENDING || p.getStatus() == PaymentStatus.OVERDUE)
                 .toList();
 
+        BigDecimal remainingRepay = repayAmount;
         for (Payment payment : pendingPayments) {
             if (remainingRepay.compareTo(BigDecimal.ZERO) <= 0) break;
             if (remainingRepay.compareTo(payment.getAmount()) >= 0) {
@@ -138,6 +156,14 @@ public class CreditService {
             credit.setRemaining(BigDecimal.ZERO);
             credit.setStatus(CreditStatus.CLOSED);
             credit.setClosedAt(LocalDateTime.now());
+            // При полном досрочном погашении отменяем оставшиеся платежи
+            pendingPayments.stream()
+                    .filter(p -> p.getStatus() == PaymentStatus.PENDING || p.getStatus() == PaymentStatus.OVERDUE)
+                    .forEach(p -> {
+                        p.setStatus(PaymentStatus.PAID);
+                        p.setPaidAt(LocalDateTime.now());
+                        paymentRepository.save(p);
+                    });
         }
 
         return CreditMapper.toResponse(creditRepository.save(credit));
