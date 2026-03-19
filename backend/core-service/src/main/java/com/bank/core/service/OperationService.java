@@ -52,6 +52,9 @@ public class OperationService {
 
     public void requestWithdrawal(Long accountId, MoneyOperationRequest request) {
         Account account = findActiveAccount(accountId);
+        // Предварительная проверка баланса (до отправки в Kafka)
+        validateSufficientFunds(account, request.amount());
+
         OperationEvent event = new OperationEvent(
                 UUID.randomUUID(),
                 accountId,
@@ -68,6 +71,8 @@ public class OperationService {
     public void requestTransfer(TransferRequest request) {
         Account from = findActiveAccount(request.fromAccountId());
         Account to = findActiveAccount(request.toAccountId());
+        // Предварительная проверка баланса (до отправки в Kafka)
+        validateSufficientFunds(from, request.amount());
 
         BigDecimal exchangeRate = null;
         if (from.getCurrency() != to.getCurrency()) {

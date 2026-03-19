@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class KafkaOperationProducer {
 
-    private final KafkaTemplate<String, OperationEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void send(OperationEvent event) {
         String key = String.valueOf(event.accountId());
