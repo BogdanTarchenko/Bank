@@ -20,7 +20,7 @@ public class SettingsService {
 
     private final UserSettingsRepository settingsRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public SettingsResponse getSettings(Long userId) {
         UserSettings settings = settingsRepository.findByUserId(userId)
                 .orElseGet(() -> createDefaultSettings(userId));
