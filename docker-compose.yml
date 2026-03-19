@@ -141,7 +141,7 @@ services:
   core-service:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prebuilt
       args:
         SERVICE_NAME: core-service
     container_name: bank-core-service
@@ -158,7 +158,7 @@ services:
   auth-service:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prebuilt
       args:
         SERVICE_NAME: auth-service
     container_name: bank-auth-service
@@ -173,7 +173,7 @@ services:
   user-service:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prebuilt
       args:
         SERVICE_NAME: user-service
     container_name: bank-user-service
@@ -188,7 +188,7 @@ services:
   credit-service:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prebuilt
       args:
         SERVICE_NAME: credit-service
     container_name: bank-credit-service
@@ -203,7 +203,7 @@ services:
   client-bff:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prebuilt
       args:
         SERVICE_NAME: client-bff
     container_name: bank-client-bff
@@ -220,7 +220,7 @@ services:
   employee-bff:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prebuilt
       args:
         SERVICE_NAME: employee-bff
     container_name: bank-employee-bff

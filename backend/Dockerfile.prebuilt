@@ -1,0 +1,10 @@
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+ARG SERVICE_NAME
+COPY ${SERVICE_NAME}/build/libs/ /tmp/libs/
+RUN cp $(ls /tmp/libs/*.jar | grep -v plain | head -1) app.jar && rm -rf /tmp/libs
+
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
