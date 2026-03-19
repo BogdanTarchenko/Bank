@@ -7,6 +7,7 @@ public actor HTTPClient {
     private let encoder: JSONEncoder
     private var tokenProvider: (@Sendable () async -> String?)?
     private var onUnauthorized: (@Sendable () async -> Void)?
+    private var onForbidden: (@Sendable () async -> Void)?
 
     public init(baseURL: String) {
         self.baseURL = baseURL
@@ -21,6 +22,10 @@ public actor HTTPClient {
 
     public func setOnUnauthorized(_ handler: @escaping @Sendable () async -> Void) {
         self.onUnauthorized = handler
+    }
+
+    public func setOnForbidden(_ handler: @escaping @Sendable () async -> Void) {
+        self.onForbidden = handler
     }
 
     public func request<T: Decodable & Sendable>(_ endpoint: any Endpoint) async throws -> T {
@@ -75,6 +80,10 @@ public actor HTTPClient {
             return (data, httpResponse)
         } catch let error as NetworkError {
             throw error
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
         } catch {
             throw NetworkError.networkFailure(error.localizedDescription)
         }
@@ -88,6 +97,7 @@ public actor HTTPClient {
             Task { await onUnauthorized?() }
             throw NetworkError.unauthorized
         case 403:
+            Task { await onForbidden?() }
             throw NetworkError.forbidden
         case 404:
             throw NetworkError.notFound

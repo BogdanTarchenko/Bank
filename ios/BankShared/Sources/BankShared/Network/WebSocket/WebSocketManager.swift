@@ -6,17 +6,20 @@ public final class WebSocketManager: @unchecked Sendable {
     private var isConnected = false
     private var onMessage: (@Sendable (Operation) -> Void)?
     private let decoder = JSONDecoder()
+    private var pendingSubscriptions: [String] = []
 
     public init() {}
 
     public func connect(baseURL: String, token: String?, onMessage: @escaping @Sendable (Operation) -> Void) {
-        self.onMessage = onMessage
+        disconnect()
 
-        // SockJS raw WebSocket fallback endpoint
+        self.onMessage = onMessage
+        self.pendingSubscriptions = []
+
         let wsURL = baseURL
             .replacingOccurrences(of: "http://", with: "ws://")
             .replacingOccurrences(of: "https://", with: "wss://")
-        guard let url = URL(string: "\(wsURL)/ws/operations/websocket") else { return }
+        guard let url = URL(string: "\(wsURL)/ws/operations") else { return }
 
         var request = URLRequest(url: url)
         if let token {
@@ -26,7 +29,6 @@ public final class WebSocketManager: @unchecked Sendable {
         webSocketTask = session.webSocketTask(with: request)
         webSocketTask?.resume()
 
-        // Send STOMP CONNECT
         let connectFrame = STOMPFrame.connect()
         send(connectFrame)
 
@@ -34,16 +36,24 @@ public final class WebSocketManager: @unchecked Sendable {
     }
 
     public func subscribe(destination: String) {
-        let frame = STOMPFrame.subscribe(destination: destination)
-        send(frame)
+        if isConnected {
+            let frame = STOMPFrame.subscribe(destination: destination, id: "sub-\(destination.hashValue)")
+            send(frame)
+        } else {
+            pendingSubscriptions.append(destination)
+        }
     }
 
     public func disconnect() {
-        let frame = STOMPFrame.disconnect()
-        send(frame)
+        guard webSocketTask != nil else { return }
+        if isConnected {
+            let frame = STOMPFrame.disconnect()
+            send(frame)
+        }
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         webSocketTask = nil
         isConnected = false
+        pendingSubscriptions = []
     }
 
     private func send(_ frame: STOMPFrame) {
@@ -75,12 +85,19 @@ public final class WebSocketManager: @unchecked Sendable {
         switch frame.command {
         case .CONNECTED:
             isConnected = true
+            for destination in pendingSubscriptions {
+                let subFrame = STOMPFrame.subscribe(destination: destination, id: "sub-\(destination.hashValue)")
+                send(subFrame)
+            }
+            pendingSubscriptions = []
         case .MESSAGE:
             if let body = frame.body, let data = body.data(using: .utf8) {
                 if let operation = try? decoder.decode(Operation.self, from: data) {
                     onMessage?(operation)
                 }
             }
+        case .ERROR:
+            isConnected = false
         default:
             break
         }

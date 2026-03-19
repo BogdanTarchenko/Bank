@@ -1,5 +1,4 @@
 import Foundation
-import AuthenticationServices
 
 @MainActor
 public final class AuthManager: ObservableObject {
@@ -10,6 +9,16 @@ public final class AuthManager: ObservableObject {
     @Published public var accessToken: String?
     @Published public var isAuthenticated = false
     @Published public var userId: Int64?
+    @Published public var email: String?
+    @Published public var showLoginWebView = false
+
+    /// Callback to resolve email → numeric userId from user-service
+    public var userIdResolver: (@Sendable (String) async throws -> Int64)?
+
+    private var codeVerifier: String?
+    private var loginContinuation: CheckedContinuation<Void, Error>?
+
+    public var authConfig: any AuthConfiguration { config }
 
     public init(config: any AuthConfiguration) {
         self.config = config
@@ -18,12 +27,25 @@ public final class AuthManager: ObservableObject {
         if let savedId = keychain.get("user_id"), let id = Int64(savedId) {
             self.userId = id
         }
+        if let savedEmail = keychain.get("email") {
+            self.email = savedEmail
+        }
         self.isAuthenticated = accessToken != nil
     }
 
     public func login() async throws {
-        let codeVerifier = PKCEHelper.generateCodeVerifier()
-        let codeChallenge = PKCEHelper.generateCodeChallenge(from: codeVerifier)
+        let verifier = PKCEHelper.generateCodeVerifier()
+        self.codeVerifier = verifier
+
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            self.loginContinuation = continuation
+            self.showLoginWebView = true
+        }
+    }
+
+    public func buildAuthURL() -> URL? {
+        guard let verifier = codeVerifier else { return nil }
+        let challenge = PKCEHelper.generateCodeChallenge(from: verifier)
 
         var components = URLComponents(string: "\(config.authBaseURL)/oauth2/authorize")!
         components.queryItems = [
@@ -31,36 +53,42 @@ public final class AuthManager: ObservableObject {
             URLQueryItem(name: "client_id", value: config.clientId),
             URLQueryItem(name: "redirect_uri", value: config.redirectUri),
             URLQueryItem(name: "scope", value: config.scopes),
-            URLQueryItem(name: "code_challenge", value: codeChallenge),
+            URLQueryItem(name: "code_challenge", value: challenge),
             URLQueryItem(name: "code_challenge_method", value: "S256")
         ]
+        return components.url
+    }
 
-        let authURL = components.url!
-        let callbackScheme = URL(string: config.redirectUri)!.scheme!
-
-        let callbackURL = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<URL, Error>) in
-            let session = ASWebAuthenticationSession(url: authURL, callbackURLScheme: callbackScheme) { url, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else if let url {
-                    continuation.resume(returning: url)
-                } else {
-                    continuation.resume(throwing: NetworkError.unauthorized)
-                }
-            }
-            session.presentationContextProvider = ASWebAuthenticationPresentationContextProvider.shared
-            session.prefersEphemeralWebBrowserSession = false
-            session.start()
+    public func handleCallback(url: URL) async {
+        guard let code = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?.first(where: { $0.name == "code" })?.value,
+              let verifier = codeVerifier else {
+            loginContinuation?.resume(throwing: NetworkError.unauthorized)
+            loginContinuation = nil
+            showLoginWebView = false
+            return
         }
 
-        guard let code = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?
-            .queryItems?.first(where: { $0.name == "code" })?.value else {
-            throw NetworkError.unauthorized
+        do {
+            let tokenResponse = try await exchangeCode(code, codeVerifier: verifier)
+            saveTokens(tokenResponse)
+            try await fetchUserInfo()
+            showLoginWebView = false
+            loginContinuation?.resume()
+            loginContinuation = nil
+        } catch {
+            showLoginWebView = false
+            loginContinuation?.resume(throwing: error)
+            loginContinuation = nil
         }
+        codeVerifier = nil
+    }
 
-        let tokenResponse = try await exchangeCode(code, codeVerifier: codeVerifier)
-        saveTokens(tokenResponse)
-        try await fetchUserInfo()
+    public func cancelLogin() {
+        showLoginWebView = false
+        loginContinuation?.resume(throwing: NetworkError.unauthorized)
+        loginContinuation = nil
+        codeVerifier = nil
     }
 
     public func register(request: RegisterRequest) async throws {
@@ -93,9 +121,33 @@ public final class AuthManager: ObservableObject {
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else { return }
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let sub = json["sub"] as? String, let id = Int64(sub) {
+           let sub = json["sub"] as? String {
+            // sub is email, not numeric ID
+            email = sub
+            keychain.save(sub, for: "email")
+
+            // Try numeric ID first (fallback)
+            if let id = Int64(sub) {
+                userId = id
+                keychain.save("\(id)", for: "user_id")
+            } else if let resolver = userIdResolver {
+                // Resolve email → numeric userId via user-service
+                let id = try await resolver(sub)
+                userId = id
+                keychain.save("\(id)", for: "user_id")
+            }
+        }
+    }
+
+    /// Resolve userId from email if not yet resolved (e.g., after app restart)
+    public func resolveUserIdIfNeeded() async {
+        guard userId == nil, let email, let resolver = userIdResolver else { return }
+        do {
+            let id = try await resolver(email)
             userId = id
             keychain.save("\(id)", for: "user_id")
+        } catch {
+            // userId resolution failed, will retry on next app launch
         }
     }
 
@@ -103,6 +155,7 @@ public final class AuthManager: ObservableObject {
         keychain.deleteAll()
         accessToken = nil
         userId = nil
+        email = nil
         isAuthenticated = false
     }
 
@@ -145,13 +198,5 @@ public final class AuthManager: ObservableObject {
         }
         accessToken = response.accessToken
         isAuthenticated = true
-    }
-}
-
-private final class ASWebAuthenticationPresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
-    static let shared = ASWebAuthenticationPresentationContextProvider()
-
-    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        ASPresentationAnchor()
     }
 }
