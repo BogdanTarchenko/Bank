@@ -5,7 +5,7 @@ import BankShared
 @Observable
 final class AccountDetailViewModel {
     var account: Account
-    var operations: [Operation] = []
+    var operations: [BankShared.Operation] = []
     var isLoadingOperations = false
     var amountText = ""
     var isActionLoading = false
@@ -22,12 +22,14 @@ final class AccountDetailViewModel {
     }
 
     func loadOperations() async {
-        isLoadingOperations = true
+        if operations.isEmpty { isLoadingOperations = true }
         currentPage = 0
         do {
             let page = try await useCase.getOperations(accountId: account.id, page: 0)
             operations = page.content
             hasMorePages = page.hasNext
+        } catch is CancellationError {
+            // Не меняем состояние при отмене
         } catch {
             actionError = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
         }

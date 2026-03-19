@@ -24,15 +24,38 @@ struct TransferView: View {
                     }
 
                     Section("Куда") {
-                        Picker("Счёт зачисления", selection: Binding(
-                            get: { viewModel.toAccount },
-                            set: { viewModel.toAccount = $0 }
-                        )) {
-                            Text("Выберите").tag(nil as Account?)
-                            ForEach(viewModel.accounts.filter { $0.id != viewModel.fromAccount?.id }) { account in
-                                Text("Счёт #\(account.id) — \(account.currency.rawValue)")
-                                    .tag(account as Account?)
+                        Picker("Тип перевода", selection: Binding(
+                            get: { viewModel.destinationType },
+                            set: {
+                                viewModel.destinationType = $0
+                                viewModel.toAccount = nil
+                                viewModel.externalAccountId = ""
                             }
+                        )) {
+                            ForEach(TransferDestination.allCases, id: \.self) { type in
+                                Text(type.rawValue).tag(type)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+
+                        switch viewModel.destinationType {
+                        case .own:
+                            Picker("Счёт зачисления", selection: Binding(
+                                get: { viewModel.toAccount },
+                                set: { viewModel.toAccount = $0 }
+                            )) {
+                                Text("Выберите").tag(nil as Account?)
+                                ForEach(viewModel.accounts.filter { $0.id != viewModel.fromAccount?.id }) { account in
+                                    Text("Счёт #\(account.id) — \(account.currency.rawValue)")
+                                        .tag(account as Account?)
+                                }
+                            }
+                        case .other:
+                            TextField("Номер счёта получателя", text: Binding(
+                                get: { viewModel.externalAccountId },
+                                set: { viewModel.externalAccountId = $0 }
+                            ))
+                            .keyboardType(.numberPad)
                         }
                     }
 
@@ -43,10 +66,19 @@ struct TransferView: View {
                         ), currency: viewModel.fromAccount?.currency)
                     }
 
-                    if viewModel.fromAccount?.currency != viewModel.toAccount?.currency,
+                    if viewModel.destinationType == .own,
+                       viewModel.fromAccount?.currency != viewModel.toAccount?.currency,
                        let from = viewModel.fromAccount, let to = viewModel.toAccount {
                         Section {
                             Text("Кросс-валютный перевод: \(from.currency.rawValue) → \(to.currency.rawValue). Конвертация по текущему курсу.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if viewModel.destinationType == .other {
+                        Section {
+                            Text("При переводе на счёт в другой валюте конвертация произойдёт автоматически по текущему курсу.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -71,7 +103,7 @@ struct TransferView: View {
                 )) {
                     Button("OK") { dismiss() }
                 } message: {
-                    Text("Перевод отправлен")
+                    Text("Перевод выполнен")
                 }
             } else {
                 LoadingView()

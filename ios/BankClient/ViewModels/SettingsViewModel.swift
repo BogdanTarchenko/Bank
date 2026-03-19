@@ -17,9 +17,11 @@ final class SettingsViewModel {
     }
 
     func load() async {
-        isLoading = true
+        if settings == nil { isLoading = true }
         do {
             settings = try await useCase.getSettings(userId: userId)
+        } catch is CancellationError {
+            // Не меняем состояние при отмене
         } catch {
             errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
         }
@@ -31,6 +33,17 @@ final class SettingsViewModel {
         let newTheme: Theme = current.theme == .LIGHT ? .DARK : .LIGHT
         do {
             settings = try await useCase.updateSettings(userId: userId, request: UpdateSettingsRequest(theme: newTheme))
+        } catch {
+            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+        }
+    }
+
+    func updateHiddenAccounts(_ hiddenAccounts: Set<Int64>) async {
+        do {
+            settings = try await useCase.updateSettings(
+                userId: userId,
+                request: UpdateSettingsRequest(hiddenAccounts: Array(hiddenAccounts))
+            )
         } catch {
             errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
         }

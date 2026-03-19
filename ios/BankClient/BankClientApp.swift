@@ -5,6 +5,7 @@ import BankShared
 struct BankClientApp: App {
     @StateObject private var container = DependencyContainer()
     @State private var appState = AppState()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -15,7 +16,6 @@ struct BankClientApp: App {
                 .preferredColorScheme(appState.preferredColorScheme)
                 .task {
                     await container.setup()
-                    // Restore userId on app launch
                     if let userId = container.authManager.userId {
                         appState.currentUserId = userId
                     }
@@ -23,6 +23,24 @@ struct BankClientApp: App {
                 .onChange(of: container.authManager.userId) { _, newValue in
                     appState.currentUserId = newValue
                 }
+                .task(id: appState.currentUserId) {
+                    guard let userId = appState.currentUserId else { return }
+                    await loadSettings(userId: userId)
+                }
+                .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .active, let userId = appState.currentUserId {
+                        Task { await loadSettings(userId: userId) }
+                    }
+                }
+        }
+    }
+
+    private func loadSettings(userId: Int64) async {
+        do {
+            let settings = try await container.settingsUseCase.getSettings(userId: userId)
+            appState.applySettings(settings)
+        } catch {
+            // Используем локально сохранённые настройки (UserDefaults)
         }
     }
 }

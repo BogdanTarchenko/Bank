@@ -1,0 +1,595 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		008CB0388F2AC3F06BDF4B04 /* BankShared in Frameworks */ = {isa = PBXBuildFile; productRef = F14C7FDA931913EE22DDAA57 /* BankShared */; };
+		025052E712C43D4C10A2AE25 /* AuthUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3E0BE7C05E29973D8ED69C /* AuthUseCase.swift */; };
+		13577FB7580E712D1D082E73 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B98F3CA54C18B3960885B4 /* ProfileViewModel.swift */; };
+		16C310C4657B9FB084A09AFA /* AccountListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD717D831AC6237EAD25B01 /* AccountListView.swift */; };
+		195926571ED9B0BA058AA93B /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F5DE2F9CA863EDB47A934C /* RegisterView.swift */; };
+		216C43D1AC52D65741F62336 /* CreditApplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E7AC2F807B77761D9824C8 /* CreditApplicationView.swift */; };
+		2296DC506317F50E98155D05 /* UserUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DB9167895F17D870CED92C1 /* UserUseCase.swift */; };
+		26338D5DF9DFA3B0891C60D7 /* TransferEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A2B96E1D69D5879FC76F1F /* TransferEndpoint.swift */; };
+		27559A11BF4A22C4BDB50FCD /* AccountDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B19849AAFA606F1B74030D /* AccountDetailViewModel.swift */; };
+		29425E8B3068B83A31EEE751 /* AccountDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9A00624BE8C935B50194825 /* AccountDetailView.swift */; };
+		2C3A788E3C71B3BA28516C90 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BF1B16E8EDC08010EE8417C /* RootView.swift */; };
+		2E5E20DC36DD909B4C72FBD2 /* AccountListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD3A314129AB98028A85CBE /* AccountListViewModel.swift */; };
+		324D658831ABB935DE3A793A /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5307B9EAE5151265F4FD8979 /* MainTabView.swift */; };
+		40C73EDF32539D6280D1C852 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B7544250D708B5F9F4110F /* SettingsView.swift */; };
+		437E0629C2A61CDC955978E0 /* CreditUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCFD235C85F0C63D7A2A6282 /* CreditUseCase.swift */; };
+		4EDC7ED7DDBCBB119F84F40A /* SettingsEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3647CC59342DAC15AFF99904 /* SettingsEndpoint.swift */; };
+		51DCDAB8C70FCAFED21A9321 /* CreateAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EACB3B357E4465C5CB59BD3C /* CreateAccountView.swift */; };
+		559DBF7B1D1EB863A26C715C /* AccountEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77BCCE44E4BB134E5A15DC62 /* AccountEndpoint.swift */; };
+		8349C4B6425EB54EDA69F59C /* SettingsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE9C301E94F88F460143393 /* SettingsUseCase.swift */; };
+		85076B63A61E3ED650BD8A3D /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BDEB0DF44CE1D8A1F3DF26F /* SettingsViewModel.swift */; };
+		9C87593D4E2C2B8718792E50 /* AccountUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B6F12455BA8A14A9F60E0E0 /* AccountUseCase.swift */; };
+		A29F830FA6EE71BCC505EFA8 /* TransferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112CB0F3D41D60FE22DB94DE /* TransferView.swift */; };
+		ACCBB507AC951ABD0216317B /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82A351335A26BD09046589D7 /* DependencyContainer.swift */; };
+		B23F23D1EDE9B3E39DDAEFA4 /* CreditListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1FF82EE6DBBE42FC9348E0 /* CreditListView.swift */; };
+		B3DCD60542707E6DB627A0DB /* CreditDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C358091479CF641D59A811D /* CreditDetailViewModel.swift */; };
+		B60DDF6E30BBFDC0195E12A6 /* ClientConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A0988A2795EA4AA063A0B2 /* ClientConfiguration.swift */; };
+		BBF2572B22328DD803754514 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E407EDECD4FF9D0F7421EC /* AppState.swift */; };
+		C6B31D0278E14D2500C6A66B /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7DC0E76AD7A6241F4FF60E4 /* LoginView.swift */; };
+		C867B055B23E297D84FC8B62 /* CreditApplicationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 627A7ABF5D919018CC8B96E4 /* CreditApplicationViewModel.swift */; };
+		CDD6613A94F514DCF244F16B /* CreditEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C0D563E1A10F35B6CB8E7F5 /* CreditEndpoint.swift */; };
+		CE3E0A4BDDEDCA2AD89E250A /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF1455BE6A6B4E0983BBF68 /* ProfileView.swift */; };
+		CE6FC59F539EDD51CA71B45A /* CreditListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C739933DE75E6FA00976F972 /* CreditListViewModel.swift */; };
+		D53B4DC9705F759B8423324A /* OperationRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AE6AF70B522582687C36A3 /* OperationRow.swift */; };
+		DA375361885F705F1957944D /* BankClientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3087AD8F01E354904E03E21C /* BankClientApp.swift */; };
+		DBE5B20029D05F88554648E6 /* TransferViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF622AAFA65D46807213352 /* TransferViewModel.swift */; };
+		E637B91118691242488F8219 /* PaymentRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7929C9A529E75652BB8230B0 /* PaymentRow.swift */; };
+		E76D8E0FEF2E7D70EE281EAB /* CreditDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE47456605D3582DAF1EEC27 /* CreditDetailView.swift */; };
+		E82B391B41D061610ADC645A /* UserEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = C65B6A27C84AF76AEE7C8D91 /* UserEndpoint.swift */; };
+		FA4DE5A8E7B7DD997620C456 /* TransferUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED4F0CD78F9CD5D578C2A0F4 /* TransferUseCase.swift */; };
+		FAC18B485F3B38C921C99ED4 /* CreditRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A87796D34E69C4FD5896AE8 /* CreditRatingView.swift */; };
+		FFACEB03A6BB086614763A44 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD92E46F6CF5807326C72CE /* AuthViewModel.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		03E407EDECD4FF9D0F7421EC /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		0B6F12455BA8A14A9F60E0E0 /* AccountUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountUseCase.swift; sourceTree = "<group>"; };
+		0CE9C301E94F88F460143393 /* SettingsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsUseCase.swift; sourceTree = "<group>"; };
+		0DB9167895F17D870CED92C1 /* UserUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserUseCase.swift; sourceTree = "<group>"; };
+		112CB0F3D41D60FE22DB94DE /* TransferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferView.swift; sourceTree = "<group>"; };
+		1FF622AAFA65D46807213352 /* TransferViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferViewModel.swift; sourceTree = "<group>"; };
+		23E7AC2F807B77761D9824C8 /* CreditApplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditApplicationView.swift; sourceTree = "<group>"; };
+		2C0D563E1A10F35B6CB8E7F5 /* CreditEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditEndpoint.swift; sourceTree = "<group>"; };
+		3087AD8F01E354904E03E21C /* BankClientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BankClientApp.swift; sourceTree = "<group>"; };
+		3647CC59342DAC15AFF99904 /* SettingsEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsEndpoint.swift; sourceTree = "<group>"; };
+		45B19849AAFA606F1B74030D /* AccountDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDetailViewModel.swift; sourceTree = "<group>"; };
+		45B98F3CA54C18B3960885B4 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
+		4C358091479CF641D59A811D /* CreditDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditDetailViewModel.swift; sourceTree = "<group>"; };
+		4D3E0BE7C05E29973D8ED69C /* AuthUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthUseCase.swift; sourceTree = "<group>"; };
+		4E1FF82EE6DBBE42FC9348E0 /* CreditListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditListView.swift; sourceTree = "<group>"; };
+		5307B9EAE5151265F4FD8979 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		5BF1B16E8EDC08010EE8417C /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		627A7ABF5D919018CC8B96E4 /* CreditApplicationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditApplicationViewModel.swift; sourceTree = "<group>"; };
+		6DD3A314129AB98028A85CBE /* AccountListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountListViewModel.swift; sourceTree = "<group>"; };
+		77BCCE44E4BB134E5A15DC62 /* AccountEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountEndpoint.swift; sourceTree = "<group>"; };
+		7929C9A529E75652BB8230B0 /* PaymentRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentRow.swift; sourceTree = "<group>"; };
+		82A351335A26BD09046589D7 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
+		82B7544250D708B5F9F4110F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		9A87796D34E69C4FD5896AE8 /* CreditRatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditRatingView.swift; sourceTree = "<group>"; };
+		9AD66133D5DECBEF9F20861E /* BankClient.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BankClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9AD92E46F6CF5807326C72CE /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		9BDEB0DF44CE1D8A1F3DF26F /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		A0A2B96E1D69D5879FC76F1F /* TransferEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferEndpoint.swift; sourceTree = "<group>"; };
+		B7DC0E76AD7A6241F4FF60E4 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		B9A00624BE8C935B50194825 /* AccountDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDetailView.swift; sourceTree = "<group>"; };
+		C65B6A27C84AF76AEE7C8D91 /* UserEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEndpoint.swift; sourceTree = "<group>"; };
+		C739933DE75E6FA00976F972 /* CreditListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditListViewModel.swift; sourceTree = "<group>"; };
+		CAC640D6EFC8558BFDA5BCC4 /* BankShared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BankShared; path = ../BankShared; sourceTree = SOURCE_ROOT; };
+		CEF1455BE6A6B4E0983BBF68 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		D1F5DE2F9CA863EDB47A934C /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
+		DCFD235C85F0C63D7A2A6282 /* CreditUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditUseCase.swift; sourceTree = "<group>"; };
+		DE47456605D3582DAF1EEC27 /* CreditDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditDetailView.swift; sourceTree = "<group>"; };
+		E2A0988A2795EA4AA063A0B2 /* ClientConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientConfiguration.swift; sourceTree = "<group>"; };
+		EACB3B357E4465C5CB59BD3C /* CreateAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAccountView.swift; sourceTree = "<group>"; };
+		ED4F0CD78F9CD5D578C2A0F4 /* TransferUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferUseCase.swift; sourceTree = "<group>"; };
+		F7AE6AF70B522582687C36A3 /* OperationRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationRow.swift; sourceTree = "<group>"; };
+		FCD717D831AC6237EAD25B01 /* AccountListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountListView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B6DB34C8262E26E68DC09677 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				008CB0388F2AC3F06BDF4B04 /* BankShared in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		03C1E88868FBE94EB7D6A93C /* Transfers */ = {
+			isa = PBXGroup;
+			children = (
+				112CB0F3D41D60FE22DB94DE /* TransferView.swift */,
+			);
+			path = Transfers;
+			sourceTree = "<group>";
+		};
+		1E3963CBCB04F05209F94F8E /* Endpoints */ = {
+			isa = PBXGroup;
+			children = (
+				77BCCE44E4BB134E5A15DC62 /* AccountEndpoint.swift */,
+				2C0D563E1A10F35B6CB8E7F5 /* CreditEndpoint.swift */,
+				3647CC59342DAC15AFF99904 /* SettingsEndpoint.swift */,
+				A0A2B96E1D69D5879FC76F1F /* TransferEndpoint.swift */,
+				C65B6A27C84AF76AEE7C8D91 /* UserEndpoint.swift */,
+			);
+			path = Endpoints;
+			sourceTree = "<group>";
+		};
+		2A720C29D85196B41479DBF8 /* BankClient */ = {
+			isa = PBXGroup;
+			children = (
+				03E407EDECD4FF9D0F7421EC /* AppState.swift */,
+				3087AD8F01E354904E03E21C /* BankClientApp.swift */,
+				B2D56889058F7C41ED13D5F8 /* Configuration */,
+				1E3963CBCB04F05209F94F8E /* Endpoints */,
+				6B0746BE884B63576985968B /* UseCases */,
+				FFD94665D05E59923CD4567B /* ViewModels */,
+				C2D15249E526BACC3A0EDFFF /* Views */,
+			);
+			name = BankClient;
+			path = .;
+			sourceTree = "<group>";
+		};
+		453021AB9EA2DA52E9E6212A /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				9A87796D34E69C4FD5896AE8 /* CreditRatingView.swift */,
+				CEF1455BE6A6B4E0983BBF68 /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		68A7EFA7A4E27D48BD77E425 /* Accounts */ = {
+			isa = PBXGroup;
+			children = (
+				B9A00624BE8C935B50194825 /* AccountDetailView.swift */,
+				FCD717D831AC6237EAD25B01 /* AccountListView.swift */,
+				EACB3B357E4465C5CB59BD3C /* CreateAccountView.swift */,
+				F7AE6AF70B522582687C36A3 /* OperationRow.swift */,
+			);
+			path = Accounts;
+			sourceTree = "<group>";
+		};
+		6B0746BE884B63576985968B /* UseCases */ = {
+			isa = PBXGroup;
+			children = (
+				0B6F12455BA8A14A9F60E0E0 /* AccountUseCase.swift */,
+				4D3E0BE7C05E29973D8ED69C /* AuthUseCase.swift */,
+				DCFD235C85F0C63D7A2A6282 /* CreditUseCase.swift */,
+				0CE9C301E94F88F460143393 /* SettingsUseCase.swift */,
+				ED4F0CD78F9CD5D578C2A0F4 /* TransferUseCase.swift */,
+				0DB9167895F17D870CED92C1 /* UserUseCase.swift */,
+			);
+			path = UseCases;
+			sourceTree = "<group>";
+		};
+		70F997EDAE7762FEB9E07C15 /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				5307B9EAE5151265F4FD8979 /* MainTabView.swift */,
+				5BF1B16E8EDC08010EE8417C /* RootView.swift */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		A59B0BD8179A3C5528271403 /* Credits */ = {
+			isa = PBXGroup;
+			children = (
+				23E7AC2F807B77761D9824C8 /* CreditApplicationView.swift */,
+				DE47456605D3582DAF1EEC27 /* CreditDetailView.swift */,
+				4E1FF82EE6DBBE42FC9348E0 /* CreditListView.swift */,
+				7929C9A529E75652BB8230B0 /* PaymentRow.swift */,
+			);
+			path = Credits;
+			sourceTree = "<group>";
+		};
+		B2D56889058F7C41ED13D5F8 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				E2A0988A2795EA4AA063A0B2 /* ClientConfiguration.swift */,
+				82A351335A26BD09046589D7 /* DependencyContainer.swift */,
+			);
+			path = Configuration;
+			sourceTree = "<group>";
+		};
+		C17C5A1D22C91BEF3D19042C /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				CAC640D6EFC8558BFDA5BCC4 /* BankShared */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		C2D15249E526BACC3A0EDFFF /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				68A7EFA7A4E27D48BD77E425 /* Accounts */,
+				E76B2EDD80A427F69841900C /* Auth */,
+				A59B0BD8179A3C5528271403 /* Credits */,
+				70F997EDAE7762FEB9E07C15 /* Main */,
+				453021AB9EA2DA52E9E6212A /* Profile */,
+				DB37FE5B4CFDE2286ABAB015 /* Settings */,
+				03C1E88868FBE94EB7D6A93C /* Transfers */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		D6C851E2C839C6180E303EEA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9AD66133D5DECBEF9F20861E /* BankClient.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DB37FE5B4CFDE2286ABAB015 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				82B7544250D708B5F9F4110F /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		E76B2EDD80A427F69841900C /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				B7DC0E76AD7A6241F4FF60E4 /* LoginView.swift */,
+				D1F5DE2F9CA863EDB47A934C /* RegisterView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		EEF5FA9C80EBFCA48AD23B15 = {
+			isa = PBXGroup;
+			children = (
+				2A720C29D85196B41479DBF8 /* BankClient */,
+				B2D56889058F7C41ED13D5F8 /* Configuration */,
+				1E3963CBCB04F05209F94F8E /* Endpoints */,
+				C17C5A1D22C91BEF3D19042C /* Packages */,
+				6B0746BE884B63576985968B /* UseCases */,
+				FFD94665D05E59923CD4567B /* ViewModels */,
+				C2D15249E526BACC3A0EDFFF /* Views */,
+				D6C851E2C839C6180E303EEA /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FFD94665D05E59923CD4567B /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				45B19849AAFA606F1B74030D /* AccountDetailViewModel.swift */,
+				6DD3A314129AB98028A85CBE /* AccountListViewModel.swift */,
+				9AD92E46F6CF5807326C72CE /* AuthViewModel.swift */,
+				627A7ABF5D919018CC8B96E4 /* CreditApplicationViewModel.swift */,
+				4C358091479CF641D59A811D /* CreditDetailViewModel.swift */,
+				C739933DE75E6FA00976F972 /* CreditListViewModel.swift */,
+				45B98F3CA54C18B3960885B4 /* ProfileViewModel.swift */,
+				9BDEB0DF44CE1D8A1F3DF26F /* SettingsViewModel.swift */,
+				1FF622AAFA65D46807213352 /* TransferViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		86998706A07937A4062BC99B /* BankClient */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2E8C3F5DF712958034437D3C /* Build configuration list for PBXNativeTarget "BankClient" */;
+			buildPhases = (
+				5B1A0D6FF31E1D2C8A0DA26E /* Sources */,
+				B6DB34C8262E26E68DC09677 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BankClient;
+			packageProductDependencies = (
+				F14C7FDA931913EE22DDAA57 /* BankShared */,
+			);
+			productName = BankClient;
+			productReference = 9AD66133D5DECBEF9F20861E /* BankClient.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1091DCC25BA5CADCE414A660 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = C94BD1E61C0B48EA4B7B8351 /* Build configuration list for PBXProject "BankClient" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EEF5FA9C80EBFCA48AD23B15;
+			packageReferences = (
+				839C112901CCBBBDB14F4252 /* XCLocalSwiftPackageReference "../BankShared" */,
+			);
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				86998706A07937A4062BC99B /* BankClient */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5B1A0D6FF31E1D2C8A0DA26E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				29425E8B3068B83A31EEE751 /* AccountDetailView.swift in Sources */,
+				27559A11BF4A22C4BDB50FCD /* AccountDetailViewModel.swift in Sources */,
+				559DBF7B1D1EB863A26C715C /* AccountEndpoint.swift in Sources */,
+				16C310C4657B9FB084A09AFA /* AccountListView.swift in Sources */,
+				2E5E20DC36DD909B4C72FBD2 /* AccountListViewModel.swift in Sources */,
+				9C87593D4E2C2B8718792E50 /* AccountUseCase.swift in Sources */,
+				BBF2572B22328DD803754514 /* AppState.swift in Sources */,
+				025052E712C43D4C10A2AE25 /* AuthUseCase.swift in Sources */,
+				FFACEB03A6BB086614763A44 /* AuthViewModel.swift in Sources */,
+				DA375361885F705F1957944D /* BankClientApp.swift in Sources */,
+				B60DDF6E30BBFDC0195E12A6 /* ClientConfiguration.swift in Sources */,
+				51DCDAB8C70FCAFED21A9321 /* CreateAccountView.swift in Sources */,
+				216C43D1AC52D65741F62336 /* CreditApplicationView.swift in Sources */,
+				C867B055B23E297D84FC8B62 /* CreditApplicationViewModel.swift in Sources */,
+				E76D8E0FEF2E7D70EE281EAB /* CreditDetailView.swift in Sources */,
+				B3DCD60542707E6DB627A0DB /* CreditDetailViewModel.swift in Sources */,
+				CDD6613A94F514DCF244F16B /* CreditEndpoint.swift in Sources */,
+				B23F23D1EDE9B3E39DDAEFA4 /* CreditListView.swift in Sources */,
+				CE6FC59F539EDD51CA71B45A /* CreditListViewModel.swift in Sources */,
+				FAC18B485F3B38C921C99ED4 /* CreditRatingView.swift in Sources */,
+				437E0629C2A61CDC955978E0 /* CreditUseCase.swift in Sources */,
+				ACCBB507AC951ABD0216317B /* DependencyContainer.swift in Sources */,
+				C6B31D0278E14D2500C6A66B /* LoginView.swift in Sources */,
+				324D658831ABB935DE3A793A /* MainTabView.swift in Sources */,
+				D53B4DC9705F759B8423324A /* OperationRow.swift in Sources */,
+				E637B91118691242488F8219 /* PaymentRow.swift in Sources */,
+				CE3E0A4BDDEDCA2AD89E250A /* ProfileView.swift in Sources */,
+				13577FB7580E712D1D082E73 /* ProfileViewModel.swift in Sources */,
+				195926571ED9B0BA058AA93B /* RegisterView.swift in Sources */,
+				2C3A788E3C71B3BA28516C90 /* RootView.swift in Sources */,
+				4EDC7ED7DDBCBB119F84F40A /* SettingsEndpoint.swift in Sources */,
+				8349C4B6425EB54EDA69F59C /* SettingsUseCase.swift in Sources */,
+				40C73EDF32539D6280D1C852 /* SettingsView.swift in Sources */,
+				85076B63A61E3ED650BD8A3D /* SettingsViewModel.swift in Sources */,
+				26338D5DF9DFA3B0891C60D7 /* TransferEndpoint.swift in Sources */,
+				FA4DE5A8E7B7DD997620C456 /* TransferUseCase.swift in Sources */,
+				A29F830FA6EE71BCC505EFA8 /* TransferView.swift in Sources */,
+				DBE5B20029D05F88554648E6 /* TransferViewModel.swift in Sources */,
+				E82B391B41D061610ADC645A /* UserEndpoint.swift in Sources */,
+				2296DC506317F50E98155D05 /* UserUseCase.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		02F3F382B9FDEB7CE587F774 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Bank;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bank.BankClient;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		6FCC86FCFC2F2C4348B8AFD4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Bank;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bank.BankClient;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AFA4509A6C005D21BBA17A39 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E8F36E7A3F50B6B9CD039182 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2E8C3F5DF712958034437D3C /* Build configuration list for PBXNativeTarget "BankClient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				02F3F382B9FDEB7CE587F774 /* Debug */,
+				6FCC86FCFC2F2C4348B8AFD4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C94BD1E61C0B48EA4B7B8351 /* Build configuration list for PBXProject "BankClient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFA4509A6C005D21BBA17A39 /* Debug */,
+				E8F36E7A3F50B6B9CD039182 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		839C112901CCBBBDB14F4252 /* XCLocalSwiftPackageReference "../BankShared" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../BankShared;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F14C7FDA931913EE22DDAA57 /* BankShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BankShared;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 1091DCC25BA5CADCE414A660 /* Project object */;
+}

@@ -29,5 +29,15 @@ final class DependencyContainer: ObservableObject {
         await httpClient.setOnUnauthorized { [weak self] in
             await self?.authManager.logout()
         }
+
+        // Set up email → userId resolver
+        let client = httpClient
+        authManager.userIdResolver = { email in
+            let user: User = try await client.request(UserEndpoint.getByEmail(email))
+            return user.id
+        }
+
+        // Resolve userId if user is already authenticated but userId is missing
+        await authManager.resolveUserIdIfNeeded()
     }
 }

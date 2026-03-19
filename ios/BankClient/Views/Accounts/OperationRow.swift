@@ -2,7 +2,7 @@ import SwiftUI
 import BankShared
 
 struct OperationRow: View {
-    let operation: Operation
+    let operation: BankShared.Operation
 
     var body: some View {
         HStack {

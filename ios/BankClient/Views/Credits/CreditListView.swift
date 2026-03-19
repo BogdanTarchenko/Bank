@@ -41,7 +41,7 @@ struct CreditListView: View {
                 }
             }
             .refreshable { await viewModel?.load() }
-            .task {
+            .task(id: appState.currentUserId) {
                 guard let userId = appState.currentUserId else { return }
                 if viewModel == nil {
                     viewModel = CreditListViewModel(

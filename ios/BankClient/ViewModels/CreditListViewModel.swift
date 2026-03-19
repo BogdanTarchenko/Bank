@@ -14,9 +14,12 @@ final class CreditListViewModel {
     }
 
     func load() async {
-        state = .loading
+        let previousState = state
+        if case .loaded = state {} else { state = .loading }
         do {
             state = .loaded(try await useCase.getCredits(userId: userId))
+        } catch is CancellationError {
+            state = previousState
         } catch {
             state = .error((error as? NetworkError)?.localizedDescription ?? error.localizedDescription)
         }

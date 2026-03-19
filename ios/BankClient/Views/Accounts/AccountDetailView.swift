@@ -88,14 +88,23 @@ struct AccountDetailView: View {
             if viewModel == nil {
                 let vm = AccountDetailViewModel(account: account, useCase: container.accountUseCase)
                 viewModel = vm
-                // Connect WebSocket for real-time updates
+                // WebSocket для real-time обновлений операций
                 container.webSocketManager.connect(
                     baseURL: ClientConfiguration.bffBaseURL,
                     token: container.authManager.getAccessToken()
-                ) { operation in
+                ) { [weak container] operation in
                     Task { @MainActor in
                         if operation.accountId == account.id {
-                            vm.operations.insert(operation, at: 0)
+                            // Добавить новую операцию в начало списка
+                            if !vm.operations.contains(where: { $0.id == operation.id }) {
+                                vm.operations.insert(operation, at: 0)
+                            }
+                            // Обновить баланс счёта
+                            if let useCase = container?.accountUseCase {
+                                if let updated = try? await useCase.getAccount(id: account.id) {
+                                    vm.account = updated
+                                }
+                            }
                         }
                     }
                 }

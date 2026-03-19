@@ -12,6 +12,10 @@ final class UserUseCase: Sendable {
         try await client.request(UserEndpoint.getById(id))
     }
 
+    func getUserByEmail(_ email: String) async throws -> User {
+        try await client.request(UserEndpoint.getByEmail(email))
+    }
+
     func updateUser(id: Int64, request: UpdateUserRequest) async throws -> User {
         try await client.request(UserEndpoint.update(id: id, request))
     }

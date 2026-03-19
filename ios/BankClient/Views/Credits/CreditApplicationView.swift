@@ -70,7 +70,7 @@ struct CreditApplicationView: View {
             }
         }
         .navigationTitle("Оформление кредита")
-        .task {
+        .task(id: appState.currentUserId) {
             guard let userId = appState.currentUserId else { return }
             if viewModel == nil {
                 viewModel = CreditApplicationViewModel(

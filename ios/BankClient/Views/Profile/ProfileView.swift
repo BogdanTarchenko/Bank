@@ -17,7 +17,7 @@ struct ProfileView: View {
                                 HStack {
                                     Image(systemName: "person.circle.fill")
                                         .font(.system(size: 48))
-                                        .foregroundStyle(.appPrimary)
+                                        .foregroundStyle(Color.appPrimary)
                                     VStack(alignment: .leading) {
                                         Text(user.fullName).font(.title2.bold())
                                         Text(user.email).font(.subheadline).foregroundStyle(.secondary)
@@ -60,7 +60,7 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("Профиль")
-            .task {
+            .task(id: appState.currentUserId) {
                 guard let userId = appState.currentUserId else { return }
                 if viewModel == nil {
                     viewModel = ProfileViewModel(

@@ -19,10 +19,17 @@ final class AccountListViewModel {
     }
 
     func load() async {
-        state = .loading
+        let previousState = state
+        if case .loaded = state {
+            // При refresh не показываем loading — данные остаются на экране
+        } else {
+            state = .loading
+        }
         do {
             let accounts = try await useCase.getAccounts(userId: userId)
             state = .loaded(accounts.filter { !$0.isClosed && $0.accountType == .PERSONAL })
+        } catch is CancellationError {
+            state = previousState
         } catch {
             state = .error((error as? NetworkError)?.localizedDescription ?? error.localizedDescription)
         }

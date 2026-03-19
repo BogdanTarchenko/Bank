@@ -32,7 +32,7 @@ final class AccountUseCase: Sendable {
         try await client.requestVoid(AccountEndpoint.withdraw(accountId: accountId, MoneyOperationRequest(amount: amount)))
     }
 
-    func getOperations(accountId: Int64, page: Int = 0, size: Int = 20) async throws -> PageResponse<Operation> {
+    func getOperations(accountId: Int64, page: Int = 0, size: Int = 20) async throws -> PageResponse<BankShared.Operation> {
         try await client.request(AccountEndpoint.operations(accountId: accountId, page: page, size: size))
     }
 }

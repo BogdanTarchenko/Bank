@@ -17,12 +17,15 @@ final class ProfileViewModel {
     }
 
     func load() async {
-        state = .loading
+        let previousState = state
+        if case .loaded = state {} else { state = .loading }
         do {
             async let user = userUseCase.getUser(id: userId)
             async let rating = creditUseCase.getCreditRating(userId: userId)
             state = .loaded(try await user)
             creditRating = try? await rating
+        } catch is CancellationError {
+            state = previousState
         } catch {
             state = .error((error as? NetworkError)?.localizedDescription ?? error.localizedDescription)
         }
