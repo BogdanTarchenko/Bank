@@ -11,12 +11,14 @@ public final class AuthManager: ObservableObject {
     @Published public var userId: Int64?
     @Published public var email: String?
     @Published public var showLoginWebView = false
+    @Published public var accessDeniedMessage: String?
 
     /// Callback to resolve email → numeric userId from user-service
     public var userIdResolver: (@Sendable (String) async throws -> Int64)?
 
     private var codeVerifier: String?
     private var loginContinuation: CheckedContinuation<Void, Error>?
+    private var forcePromptLogin = false
 
     public var authConfig: any AuthConfiguration { config }
 
@@ -37,6 +39,12 @@ public final class AuthManager: ObservableObject {
         let verifier = PKCEHelper.generateCodeVerifier()
         self.codeVerifier = verifier
 
+        // Если был 403, при повторном входе принудительно показываем форму логина
+        if accessDeniedMessage != nil {
+            forcePromptLogin = true
+            accessDeniedMessage = nil
+        }
+
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             self.loginContinuation = continuation
             self.showLoginWebView = true
@@ -48,7 +56,7 @@ public final class AuthManager: ObservableObject {
         let challenge = PKCEHelper.generateCodeChallenge(from: verifier)
 
         var components = URLComponents(string: "\(config.authBaseURL)/oauth2/authorize")!
-        components.queryItems = [
+        var queryItems = [
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "client_id", value: config.clientId),
             URLQueryItem(name: "redirect_uri", value: config.redirectUri),
@@ -56,6 +64,14 @@ public final class AuthManager: ObservableObject {
             URLQueryItem(name: "code_challenge", value: challenge),
             URLQueryItem(name: "code_challenge_method", value: "S256")
         ]
+
+        // Принудительно показать форму логина (после 403 — чтобы войти другим аккаунтом)
+        if forcePromptLogin {
+            queryItems.append(URLQueryItem(name: "prompt", value: "login"))
+            forcePromptLogin = false
+        }
+
+        components.queryItems = queryItems
         return components.url
     }
 
@@ -157,6 +173,17 @@ public final class AuthManager: ObservableObject {
         userId = nil
         email = nil
         isAuthenticated = false
+        accessDeniedMessage = nil
+    }
+
+    /// Вызывается при 403 Forbidden — разлогинивает и сохраняет сообщение об ошибке
+    public func denyAccess(message: String = "Доступ запрещён. Войдите с другим аккаунтом.") {
+        keychain.deleteAll()
+        accessToken = nil
+        userId = nil
+        email = nil
+        isAuthenticated = false
+        accessDeniedMessage = message
     }
 
     public func getAccessToken() -> String? {

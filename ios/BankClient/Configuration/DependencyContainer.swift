@@ -29,6 +29,9 @@ final class DependencyContainer: ObservableObject {
         await httpClient.setOnUnauthorized { [weak self] in
             await self?.authManager.logout()
         }
+        await httpClient.setOnForbidden { [weak self] in
+            await self?.authManager.denyAccess(message: "Доступ запрещён.")
+        }
 
         // Set up email → userId resolver
         let client = httpClient

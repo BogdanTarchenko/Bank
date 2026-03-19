@@ -21,6 +21,20 @@ struct EmployeeLoginView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if let deniedMessage = authManager.accessDeniedMessage {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text(deniedMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding()
+                .background(Color.orange.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal, 32)
+            }
+
             Button {
                 Task {
                     isLoading = true

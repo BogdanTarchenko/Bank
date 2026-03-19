@@ -26,7 +26,7 @@ final class EmployeeDependencyContainer: ObservableObject {
             await self?.authManager.logout()
         }
         await httpClient.setOnForbidden { [weak self] in
-            await self?.authManager.logout()
+            await self?.authManager.denyAccess(message: "Доступ запрещён. Войдите с аккаунтом сотрудника.")
         }
 
         // Set up email → userId resolver
