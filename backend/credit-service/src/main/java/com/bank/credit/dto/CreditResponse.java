@@ -13,6 +13,7 @@ public record CreditResponse(
         String tariffName,
         BigDecimal principal,
         BigDecimal remaining,
+        BigDecimal accruedInterest,
         BigDecimal interestRate,
         int termDays,
         BigDecimal dailyPayment,

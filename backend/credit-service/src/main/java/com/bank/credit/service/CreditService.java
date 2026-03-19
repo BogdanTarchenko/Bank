@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -43,17 +44,18 @@ public class CreditService {
                     String.format("Срок кредита должен быть от %d до %d дней", tariff.getMinTermDays(), tariff.getMaxTermDays()));
         }
 
-        BigDecimal dailyRate = tariff.getInterestRate()
-                .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)
-                .divide(BigDecimal.valueOf(365), 10, RoundingMode.HALF_UP);
+        double annualRateD = tariff.getInterestRate().doubleValue() / 100.0;
+        double minuteRate = annualRateD / (365.0 * 24 * 60);
+        double effectiveDailyRate = Math.pow(1 + minuteRate, 1440) - 1;
+        BigDecimal dailyRate = BigDecimal.valueOf(effectiveDailyRate);
 
         BigDecimal dailyPayment;
-        if (dailyRate.compareTo(BigDecimal.ZERO) == 0) {
+        if (effectiveDailyRate == 0) {
             dailyPayment = request.amount()
                     .divide(BigDecimal.valueOf(request.termDays()), 2, RoundingMode.CEILING);
         } else {
-            double r = dailyRate.doubleValue();
-            double annuity = request.amount().doubleValue() * r / (1 - Math.pow(1 + r, -request.termDays()));
+            double annuity = request.amount().doubleValue() * effectiveDailyRate
+                    / (1 - Math.pow(1 + effectiveDailyRate, -request.termDays()));
             dailyPayment = BigDecimal.valueOf(annuity).setScale(2, RoundingMode.CEILING);
         }
 
@@ -101,18 +103,19 @@ public class CreditService {
         // Перевод денег с мастер-счёта на счёт клиента
         coreServiceClient.transferFromMasterAccount(request.accountId(), request.amount());
 
-        return CreditMapper.toResponse(credit);
+        return CreditMapper.toResponse(credit, BigDecimal.ZERO);
     }
 
     @Transactional(readOnly = true)
     public CreditResponse getCreditById(Long id) {
-        return CreditMapper.toResponse(findById(id));
+        Credit credit = findById(id);
+        return CreditMapper.toResponse(credit, calcAccruedInterest(credit));
     }
 
     @Transactional(readOnly = true)
     public List<CreditResponse> getCreditsByUserId(Long userId) {
         return creditRepository.findByUserId(userId).stream()
-                .map(CreditMapper::toResponse)
+                .map(c -> CreditMapper.toResponse(c, calcAccruedInterest(c)))
                 .toList();
     }
 
@@ -131,11 +134,17 @@ public class CreditService {
             throw new CreditAlreadyClosedException(creditId);
         }
 
-        BigDecimal repayAmount = request.amount().min(credit.getRemaining());
+        BigDecimal accruedInterest = calcAccruedInterest(credit);
+        BigDecimal totalOwed = credit.getRemaining().add(accruedInterest);
+        BigDecimal repayAmount = request.amount().min(totalOwed);
 
         coreServiceClient.withdrawFromAccount(credit.getAccountId(), repayAmount);
 
-        credit.setRemaining(credit.getRemaining().subtract(repayAmount));
+        // Сначала гасим набежавшие проценты, остаток — в тело долга
+        BigDecimal interestPaid = repayAmount.min(accruedInterest);
+        BigDecimal principalPaid = repayAmount.subtract(interestPaid);
+        credit.setRemaining(credit.getRemaining().subtract(principalPaid));
+        credit.setLastAccrualAt(LocalDateTime.now());
 
         List<Payment> pendingPayments = paymentRepository.findByCreditIdOrderByDueDateAsc(creditId).stream()
                 .filter(p -> p.getStatus() == PaymentStatus.PENDING || p.getStatus() == PaymentStatus.OVERDUE)
@@ -156,7 +165,6 @@ public class CreditService {
             credit.setRemaining(BigDecimal.ZERO);
             credit.setStatus(CreditStatus.CLOSED);
             credit.setClosedAt(LocalDateTime.now());
-            // При полном досрочном погашении отменяем оставшиеся платежи
             pendingPayments.stream()
                     .filter(p -> p.getStatus() == PaymentStatus.PENDING || p.getStatus() == PaymentStatus.OVERDUE)
                     .forEach(p -> {
@@ -166,7 +174,18 @@ public class CreditService {
                     });
         }
 
-        return CreditMapper.toResponse(creditRepository.save(credit));
+        credit = creditRepository.save(credit);
+        return CreditMapper.toResponse(credit, calcAccruedInterest(credit));
+    }
+
+    private BigDecimal calcAccruedInterest(Credit credit) {
+        long minutesElapsed = Duration.between(credit.getLastAccrualAt(), LocalDateTime.now()).toMinutes();
+        if (minutesElapsed <= 0) return BigDecimal.ZERO;
+
+        double minuteRate = credit.getInterestRate().doubleValue() / 100.0 / (365.0 * 24 * 60);
+        double factor = Math.pow(1 + minuteRate, minutesElapsed) - 1;
+        return credit.getRemaining().multiply(BigDecimal.valueOf(factor))
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     @Transactional(readOnly = true)

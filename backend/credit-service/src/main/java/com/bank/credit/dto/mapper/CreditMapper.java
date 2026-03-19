@@ -7,6 +7,8 @@ import com.bank.credit.model.Credit;
 import com.bank.credit.model.Payment;
 import com.bank.credit.model.Tariff;
 
+import java.math.BigDecimal;
+
 public final class CreditMapper {
 
     private CreditMapper() {}
@@ -25,7 +27,7 @@ public final class CreditMapper {
         );
     }
 
-    public static CreditResponse toResponse(Credit credit) {
+    public static CreditResponse toResponse(Credit credit, BigDecimal accruedInterest) {
         return new CreditResponse(
                 credit.getId(),
                 credit.getUserId(),
@@ -34,6 +36,7 @@ public final class CreditMapper {
                 credit.getTariff().getName(),
                 credit.getPrincipal(),
                 credit.getRemaining(),
+                accruedInterest,
                 credit.getInterestRate(),
                 credit.getTermDays(),
                 credit.getDailyPayment(),

@@ -54,8 +54,12 @@ public class Credit {
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
 
+    @Column(name = "last_accrual_at", nullable = false)
+    private LocalDateTime lastAccrualAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (lastAccrualAt == null) lastAccrualAt = LocalDateTime.now();
     }
 }

@@ -1,0 +1,1 @@
+ALTER TABLE credits ADD COLUMN last_accrual_at TIMESTAMP NOT NULL DEFAULT now();
