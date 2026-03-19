@@ -38,7 +38,7 @@ public class ProxyService {
             return ResponseEntity.badRequest().body("{\"error\":\"Неизвестный сервис: " + serviceName + "\"}");
         }
 
-        String targetUrl = baseUrl + path;
+        String targetUrl = baseUrl + "/api/v1" + path;
         String queryString = request.getQueryString();
         if (queryString != null) {
             targetUrl += "?" + queryString;
