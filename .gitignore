@@ -38,8 +38,9 @@ ios/*.xcuserstate
 ios/DerivedData/
 ios/build/
 ios/Pods/
-*.xcodeproj/xcuserdata/
-*.xcodeproj/project.xcworkspace/xcuserdata/
+**/xcuserdata/
+**/project.xcworkspace/
+**/.swiftpm/
 
 # Docker
 docker-compose.override.yml
