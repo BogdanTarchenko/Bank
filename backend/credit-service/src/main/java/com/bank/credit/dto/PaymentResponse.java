@@ -9,6 +9,7 @@ public record PaymentResponse(
         Long id,
         Long creditId,
         BigDecimal amount,
+        String currency,
         PaymentStatus status,
         LocalDateTime dueDate,
         LocalDateTime paidAt
