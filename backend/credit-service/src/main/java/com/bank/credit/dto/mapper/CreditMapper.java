@@ -53,6 +53,7 @@ public final class CreditMapper {
                 payment.getId(),
                 payment.getCredit().getId(),
                 payment.getAmount(),
+                payment.getCredit().getTariff().getCurrency(),
                 payment.getStatus(),
                 payment.getDueDate(),
                 payment.getPaidAt()
