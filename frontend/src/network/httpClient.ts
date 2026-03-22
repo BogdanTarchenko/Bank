@@ -26,9 +26,11 @@ const httpClient = axios.create({
   },
 })
 
+const AUTH_URLS = ['/auth/oauth2/token', '/auth/userinfo', '/auth/api/v1/auth/register']
+
 httpClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
-  if (token) {
+  if (token && !config.url?.includes('/oauth2/token')) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
@@ -38,7 +40,10 @@ httpClient.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
     if (axios.isAxiosError(error)) {
-      if (error.response?.status === 401) {
+      const requestUrl = error.config?.url ?? ''
+      const isAuthUrl = AUTH_URLS.some((url) => requestUrl.includes(url))
+
+      if (error.response?.status === 401 && !isAuthUrl) {
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
         window.location.href = '/login'

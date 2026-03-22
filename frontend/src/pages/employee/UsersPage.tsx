@@ -24,7 +24,7 @@ import { LoadingButton } from '@/shared/ui/LoadingButton'
 import { userApi } from '@/api/userApi'
 import { authApi } from '@/api/authApi'
 import { formatDate } from '@/shared/utils/format'
-import { Role } from '@/entities/common'
+import { Role, RoleLabel } from '@/entities/common'
 import type { UserResponse } from '@/entities/user'
 import { ApiError } from '@/network/httpClient'
 
@@ -142,7 +142,7 @@ export function UsersPage() {
             render: (row: UserResponse) => (
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 {row.roles.map((r) => (
-                  <Chip key={r} label={r} size="small" variant="outlined" />
+                  <Chip key={r} label={RoleLabel[r] ?? r} size="small" variant="outlined" />
                 ))}
               </Box>
             ),
@@ -215,14 +215,14 @@ export function UsersPage() {
                 }}
               >
                 {Object.values(Role).map((r) => (
-                  <MenuItem key={r} value={r}>{r}</MenuItem>
+                  <MenuItem key={r} value={r}>{RoleLabel[r] ?? r}</MenuItem>
                 ))}
               </Select>
               <Box sx={{ display: 'flex', gap: 0.5, mt: 1 }}>
                 {form.roles.map((r) => (
                   <Chip
                     key={r}
-                    label={r}
+                    label={RoleLabel[r] ?? r}
                     size="small"
                     onDelete={() => setForm((p) => ({ ...p, roles: p.roles.filter((role) => role !== r) }))}
                   />

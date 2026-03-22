@@ -3,11 +3,19 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Box, CircularProgress, Typography } from '@mui/material'
 import { authApi } from '@/api/authApi'
 import { useAuthStore } from '@/store/authStore'
+import { Role } from '@/entities/common'
+
+function detectActiveRole(roles: string[]): 'client' | 'employee' {
+  if (roles.includes(Role.ADMIN) || roles.includes(Role.EMPLOYEE)) {
+    return 'employee'
+  }
+  return 'client'
+}
 
 export function CallbackPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const setAuth = useAuthStore((s) => s.setAuth)
+  const { setAuth, setActiveRole } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
   const processedRef = useRef(false)
 
@@ -31,20 +39,24 @@ export function CallbackPage() {
 
     authApi
       .exchangeCode(code, state)
-      .then(async (tokenResponse) => {
+      .then(({ tokenResponse, userInfo }) => {
         localStorage.setItem('access_token', tokenResponse.access_token)
         if (tokenResponse.refresh_token) {
           localStorage.setItem('refresh_token', tokenResponse.refresh_token)
         }
-        const userInfo = await authApi.getUserInfo()
+
         setAuth(userInfo, tokenResponse.access_token, tokenResponse.refresh_token)
-        navigate('/client/dashboard', { replace: true })
+
+        const role = detectActiveRole(userInfo.roles)
+        setActiveRole(role)
+
+        navigate(`/${role}/dashboard`, { replace: true })
       })
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : 'Неизвестная ошибка'
         setError(message)
       })
-  }, [searchParams, navigate, setAuth])
+  }, [searchParams, navigate, setAuth, setActiveRole])
 
   if (error) {
     return (

@@ -21,7 +21,7 @@ import { useAuthStore } from '@/store/authStore'
 import { formatDateShort } from '@/shared/utils/format'
 import type { CreditResponse } from '@/entities/credit'
 import type { CreditRatingResponse } from '@/entities/credit'
-import { Currency } from '@/entities/common'
+import { Currency, CreditGradeLabel } from '@/entities/common'
 import { ApiError } from '@/network/httpClient'
 
 export function CreditsPage() {
@@ -33,11 +33,10 @@ export function CreditsPage() {
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
-    if (!user) return
     try {
       const [creditsData, ratingData] = await Promise.all([
-        creditApi.getCredits(user.userId),
-        creditApi.getCreditRating(user.userId),
+        creditApi.getCredits(),
+        user ? creditApi.getCreditRating(user.userId) : Promise.resolve(null),
       ])
       setCredits(creditsData)
       setRating(ratingData)
@@ -89,7 +88,7 @@ export function CreditsPage() {
               </Grid>
               <Grid size={{ xs: 6, md: 3 }}>
                 <Typography variant="body2" color="text.secondary">Категория</Typography>
-                <Typography variant="h5">{rating.grade}</Typography>
+                <Typography variant="h5">{CreditGradeLabel[rating.grade] ?? rating.grade}</Typography>
               </Grid>
               <Grid size={{ xs: 6, md: 3 }}>
                 <Typography variant="body2" color="text.secondary">Всего кредитов</Typography>

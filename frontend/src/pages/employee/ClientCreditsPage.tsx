@@ -18,7 +18,7 @@ import { DataTable } from '@/shared/ui/DataTable'
 import { creditApi } from '@/api/creditApi'
 import { userApi } from '@/api/userApi'
 import { formatDateShort, formatDate } from '@/shared/utils/format'
-import { Currency } from '@/entities/common'
+import { Currency, CreditGradeLabel } from '@/entities/common'
 import type { CreditResponse, PaymentResponse, CreditRatingResponse } from '@/entities/credit'
 import type { UserResponse } from '@/entities/user'
 import { ApiError } from '@/network/httpClient'
@@ -99,7 +99,7 @@ export function ClientCreditsPage() {
               </Grid>
               <Grid size={{ xs: 6, md: 3 }}>
                 <Typography variant="body2" color="text.secondary">Категория</Typography>
-                <Typography variant="h5">{rating.grade}</Typography>
+                <Typography variant="h5">{CreditGradeLabel[rating.grade] ?? rating.grade}</Typography>
               </Grid>
               <Grid size={{ xs: 6, md: 3 }}>
                 <Typography variant="body2" color="text.secondary">Активные</Typography>

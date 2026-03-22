@@ -13,6 +13,53 @@ export const Role = {
 } as const
 export type Role = (typeof Role)[keyof typeof Role]
 
+export const RoleLabel: Record<string, string> = {
+  ADMIN: 'Администратор',
+  EMPLOYEE: 'Сотрудник',
+  CLIENT: 'Клиент',
+  USER: 'Пользователь',
+}
+
+export const CurrencyLabel: Record<string, string> = {
+  USD: 'Доллар США',
+  EUR: 'Евро',
+  RUB: 'Рубль',
+  GBP: 'Фунт стерлингов',
+}
+
+export const AccountTypeLabel: Record<string, string> = {
+  PERSONAL: 'Личный',
+  MASTER: 'Мастер-счёт',
+}
+
+export const CreditStatusLabel: Record<string, string> = {
+  ACTIVE: 'Активный',
+  CLOSED: 'Закрыт',
+  OVERDUE: 'Просрочен',
+}
+
+export const PaymentStatusLabel: Record<string, string> = {
+  PENDING: 'Ожидает',
+  PAID: 'Оплачен',
+  OVERDUE: 'Просрочен',
+}
+
+export const OperationTypeLabel: Record<string, string> = {
+  DEPOSIT: 'Пополнение',
+  WITHDRAWAL: 'Снятие',
+  TRANSFER_IN: 'Входящий перевод',
+  TRANSFER_OUT: 'Исходящий перевод',
+}
+
+export const CreditGradeLabel: Record<string, string> = {
+  EXCELLENT: 'Отличный',
+  GOOD: 'Хороший',
+  FAIR: 'Средний',
+  POOR: 'Низкий',
+  BAD: 'Плохой',
+  NO_HISTORY: 'Нет истории',
+}
+
 export const Theme = {
   LIGHT: 'LIGHT',
   DARK: 'DARK',

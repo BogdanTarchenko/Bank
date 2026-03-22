@@ -8,6 +8,7 @@ import { MoneyDisplay } from '@/shared/ui/MoneyDisplay'
 import { accountApi } from '@/api/accountApi'
 import { formatDate } from '@/shared/utils/format'
 import type { AccountResponse } from '@/entities/account'
+import { CurrencyLabel } from '@/entities/common'
 import { ApiError } from '@/network/httpClient'
 
 export function EmployeeDashboardPage() {
@@ -67,7 +68,7 @@ export function EmployeeDashboardPage() {
         columns={[
           { id: 'id', label: 'ID', render: (row: AccountResponse) => <Typography variant="body2" fontWeight={600}>#{row.id}</Typography> },
           { id: 'userId', label: 'Пользователь', render: (row: AccountResponse) => <Typography variant="body2">#{row.userId}</Typography> },
-          { id: 'currency', label: 'Валюта', render: (row: AccountResponse) => <Typography variant="body2">{row.currency}</Typography> },
+          { id: 'currency', label: 'Валюта', render: (row: AccountResponse) => <Typography variant="body2">{CurrencyLabel[row.currency] ?? row.currency}</Typography> },
           {
             id: 'balance',
             label: 'Баланс',

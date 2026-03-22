@@ -24,10 +24,8 @@ export function EmployeeSettingsPage() {
   const fetchSettings = useCallback(async () => {
     if (!user) return
     try {
-      const settings = await settingsApi.getSettings(user.userId, 'employee')
-      setTheme(settings.theme)
+      await settingsApi.getSettings(user.userId, 'employee')
     } catch {
-      // Settings may not exist yet
     } finally {
       setLoading(false)
     }

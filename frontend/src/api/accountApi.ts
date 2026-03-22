@@ -5,7 +5,8 @@ import type { AccountResponse, CreateAccountRequest, MoneyOperationRequest } fro
 export const accountApi = {
   async getAccounts(userId?: number, portal: 'client' | 'employee' = 'client'): Promise<AccountResponse[]> {
     const base = endpoints[portal].accounts
-    const url = userId ? `${base}?userId=${userId}` : base
+    // Client BFF определяет userId из JWT, employee — нужен query param
+    const url = portal === 'employee' && userId ? `${base}?userId=${userId}` : base
     const { data } = await httpClient.get<AccountResponse[]>(url)
     return data
   },

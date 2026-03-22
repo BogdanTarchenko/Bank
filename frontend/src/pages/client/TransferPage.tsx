@@ -16,14 +16,12 @@ import { PageLayout } from '@/shared/ui/PageLayout'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
 import { accountApi } from '@/api/accountApi'
 import { transferApi } from '@/api/transferApi'
-import { useAuthStore } from '@/store/authStore'
 import { formatMoney } from '@/shared/utils/format'
 import type { AccountResponse } from '@/entities/account'
 import { ApiError } from '@/network/httpClient'
 
 export function TransferPage() {
   const { enqueueSnackbar } = useSnackbar()
-  const user = useAuthStore((s) => s.user)
   const [accounts, setAccounts] = useState<AccountResponse[]>([])
   const [fromAccountId, setFromAccountId] = useState<number | ''>('')
   const [toAccountId, setToAccountId] = useState<string>('')
@@ -32,10 +30,9 @@ export function TransferPage() {
   const [submitting, setSubmitting] = useState(false)
 
   const fetchAccounts = useCallback(async () => {
-    if (!user) return
     setLoading(true)
     try {
-      const data = await accountApi.getAccounts(user.userId)
+      const data = await accountApi.getAccounts()
       setAccounts(data.filter((a) => !a.isClosed))
     } catch (err) {
       if (err instanceof ApiError) {
@@ -44,7 +41,7 @@ export function TransferPage() {
     } finally {
       setLoading(false)
     }
-  }, [user, enqueueSnackbar])
+  }, [enqueueSnackbar])
 
   useEffect(() => {
     fetchAccounts()

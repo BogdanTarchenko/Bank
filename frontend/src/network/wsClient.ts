@@ -1,5 +1,4 @@
 import { Client } from '@stomp/stompjs'
-import SockJS from 'sockjs-client'
 import type { OperationResponse } from '@/entities/operation'
 
 type OperationCallback = (operation: OperationResponse) => void
@@ -7,13 +6,13 @@ type OperationCallback = (operation: OperationResponse) => void
 let stompClient: Client | null = null
 const subscriptions = new Map<string, { unsubscribe: () => void }>()
 
-export function connectWebSocket(bffPort: number = 8084): Client {
+export function connectWebSocket(): Client {
   if (stompClient?.connected) {
     return stompClient
   }
 
   const client = new Client({
-    webSocketFactory: () => new SockJS(`http://localhost:${bffPort}/ws/operations`),
+    brokerURL: `ws://${window.location.hostname}:8084/ws/operations`,
     reconnectDelay: 5000,
     heartbeatIncoming: 4000,
     heartbeatOutgoing: 4000,

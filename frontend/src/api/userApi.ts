@@ -39,4 +39,14 @@ export const userApi = {
     const { data } = await httpClient.patch<UserResponse>(endpoints.employee.userUnblock(id))
     return data
   },
+
+  async getAvailableRoles(): Promise<string[]> {
+    const { data } = await httpClient.get<string[]>(endpoints.employee.availableRoles)
+    return data
+  },
+
+  async updateUserRoles(id: number, roles: string[]): Promise<UserResponse> {
+    const { data } = await httpClient.patch<UserResponse>(endpoints.employee.userRoles(id), { roles })
+    return data
+  },
 }

@@ -11,7 +11,6 @@ export interface AccountResponse {
 }
 
 export interface CreateAccountRequest {
-  userId: number
   currency: Currency
 }
 

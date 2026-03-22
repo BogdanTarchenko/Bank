@@ -145,8 +145,8 @@ export function Layout() {
             <MenuItem
               onClick={() => {
                 logout()
-                navigate('/login')
                 setAnchorEl(null)
+                window.location.href = 'http://localhost:8081/logout'
               }}
             >
               Выйти
