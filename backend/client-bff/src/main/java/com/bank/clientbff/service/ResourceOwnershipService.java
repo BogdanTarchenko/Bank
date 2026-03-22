@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,7 @@ public class ResourceOwnershipService {
             if (resourceUserId != expectedUserId) {
                 throw new ResourceAccessDeniedException(resourceType);
             }
-        } catch (ResourceAccessDeniedException e) {
+        } catch (ResourceAccessDeniedException | RestClientResponseException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("Ошибка проверки доступа", e);

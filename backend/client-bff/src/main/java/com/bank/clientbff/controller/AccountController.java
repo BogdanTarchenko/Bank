@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClientResponseException;
 
 @RestController
 @RequestMapping("/api/v1/accounts")
@@ -46,7 +47,7 @@ public class AccountController {
             ObjectNode node = (ObjectNode) objectMapper.readTree(body);
             node.put("userId", userId);
             return coreServiceClient.post("/api/v1/accounts", objectMapper.writeValueAsString(node));
-        } catch (ResourceAccessDeniedException e) {
+        } catch (ResourceAccessDeniedException | RestClientResponseException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("Ошибка создания счёта", e);
