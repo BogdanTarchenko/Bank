@@ -1,6 +1,7 @@
 package com.bank.user.controller;
 
 import com.bank.user.dto.CreateUserRequest;
+import com.bank.user.dto.UpdateRolesRequest;
 import com.bank.user.dto.UpdateUserRequest;
 import com.bank.user.dto.UserResponse;
 import com.bank.user.service.UserService;
@@ -42,6 +43,11 @@ public class UserController {
     @PutMapping("/{id}")
     public UserResponse updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
         return userService.updateUser(id, request);
+    }
+
+    @PatchMapping("/{id}/roles")
+    public UserResponse updateUserRoles(@PathVariable Long id, @Valid @RequestBody UpdateRolesRequest request) {
+        return userService.updateRoles(id, request.roles());
     }
 
     @PatchMapping("/{id}/block")
