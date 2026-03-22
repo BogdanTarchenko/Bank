@@ -19,8 +19,27 @@ struct BankEmployeeApp: App {
                     if let userId = container.authManager.userId {
                         appState.currentUserId = userId
                     }
+                    if container.authManager.isAuthenticated && container.authManager.userId == nil {
+                        await container.authManager.resolveUserIdIfNeeded()
+                        if let userId = container.authManager.userId {
+                            appState.currentUserId = userId
+                        }
+                    }
                 }
-                .onChange(of: container.authManager.userId) { _, newValue in
+                .onReceive(container.authManager.$isAuthenticated) { isAuth in
+                    if isAuth && container.authManager.userId == nil {
+                        Task {
+                            await container.authManager.resolveUserIdIfNeeded()
+                            if let userId = container.authManager.userId {
+                                appState.currentUserId = userId
+                            }
+                        }
+                    }
+                    if !isAuth {
+                        appState.currentUserId = nil
+                    }
+                }
+                .onReceive(container.authManager.$userId) { newValue in
                     appState.currentUserId = newValue
                 }
                 .task(id: appState.currentUserId) {
@@ -28,8 +47,18 @@ struct BankEmployeeApp: App {
                     await loadSettings(userId: userId)
                 }
                 .onChange(of: scenePhase) { _, newPhase in
-                    if newPhase == .active, let userId = appState.currentUserId {
-                        Task { await loadSettings(userId: userId) }
+                    if newPhase == .active {
+                        Task {
+                            if container.authManager.isAuthenticated && container.authManager.userId == nil {
+                                await container.authManager.resolveUserIdIfNeeded()
+                                if let userId = container.authManager.userId {
+                                    appState.currentUserId = userId
+                                }
+                            }
+                            if let userId = appState.currentUserId {
+                                await loadSettings(userId: userId)
+                            }
+                        }
                     }
                 }
         }

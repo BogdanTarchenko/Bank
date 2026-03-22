@@ -14,6 +14,9 @@ struct CreditDetailView: View {
                         LabeledContent("Тариф", value: viewModel.credit.tariffName)
                         LabeledContent("Сумма кредита", value: viewModel.credit.principal.formattedPlain())
                         LabeledContent("Остаток", value: viewModel.credit.remaining.formattedPlain())
+                        if let accrued = viewModel.credit.accruedInterest, accrued > 0 {
+                            LabeledContent("Начисленные %", value: accrued.formattedPlain())
+                        }
                         LabeledContent("Ставка", value: "\(viewModel.credit.interestRate.formattedPlain())%")
                         LabeledContent("Срок", value: "\(viewModel.credit.termDays) дн.")
                         LabeledContent("Ежедневный платёж", value: viewModel.credit.dailyPayment.formattedPlain())
