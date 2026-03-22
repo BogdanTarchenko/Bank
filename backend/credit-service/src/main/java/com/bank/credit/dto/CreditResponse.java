@@ -11,6 +11,7 @@ public record CreditResponse(
         Long accountId,
         Long tariffId,
         String tariffName,
+        String currency,
         BigDecimal principal,
         BigDecimal remaining,
         BigDecimal accruedInterest,
