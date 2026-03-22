@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -31,11 +32,18 @@ public class ProxyService {
         );
     }
 
+    private static final Pattern ROLES_PATH = Pattern.compile("^/users/\\d+/roles$");
+
     public ResponseEntity<String> proxy(String serviceName, String path, HttpMethod method,
                                          String body, HttpServletRequest request) {
         String baseUrl = serviceUrls.get(serviceName);
         if (baseUrl == null) {
             return ResponseEntity.badRequest().body("{\"error\":\"Неизвестный сервис: " + serviceName + "\"}");
+        }
+
+        if ("user".equals(serviceName) && method == HttpMethod.PATCH && ROLES_PATH.matcher(path).matches()) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body("{\"error\":\"Для управления ролями используйте PATCH /api/v1/users/{id}/roles\"}");
         }
 
         String targetUrl = baseUrl + "/api/v1" + path;

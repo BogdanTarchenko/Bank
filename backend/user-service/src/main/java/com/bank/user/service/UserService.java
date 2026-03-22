@@ -3,6 +3,7 @@ package com.bank.user.service;
 import com.bank.user.dto.CreateUserRequest;
 import com.bank.user.dto.UpdateUserRequest;
 import com.bank.user.dto.UserResponse;
+import com.bank.user.model.Role;
 import com.bank.user.dto.mapper.UserMapper;
 import com.bank.user.exception.EmailAlreadyExistsException;
 import com.bank.user.exception.UserNotFoundException;
@@ -74,10 +75,9 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateUserRoles(Long id, Set<Role> roles) {
+    public UserResponse updateRoles(Long id, Set<Role> roles) {
         User user = findById(id);
-        user.getRoles().clear();
-        user.getRoles().addAll(roles);
+        user.setRoles(new java.util.HashSet<>(roles));
         return UserMapper.toResponse(userRepository.save(user));
     }
 
