@@ -12,6 +12,7 @@
 		13577FB7580E712D1D082E73 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B98F3CA54C18B3960885B4 /* ProfileViewModel.swift */; };
 		16C310C4657B9FB084A09AFA /* AccountListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD717D831AC6237EAD25B01 /* AccountListView.swift */; };
 		195926571ED9B0BA058AA93B /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F5DE2F9CA863EDB47A934C /* RegisterView.swift */; };
+		1D33EFE643EFB17C320774DF /* ExchangeRateViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9EF705306050B13FF3DB0B /* ExchangeRateViewModel.swift */; };
 		216C43D1AC52D65741F62336 /* CreditApplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E7AC2F807B77761D9824C8 /* CreditApplicationView.swift */; };
 		2296DC506317F50E98155D05 /* UserUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DB9167895F17D870CED92C1 /* UserUseCase.swift */; };
 		26338D5DF9DFA3B0891C60D7 /* TransferEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A2B96E1D69D5879FC76F1F /* TransferEndpoint.swift */; };
@@ -20,6 +21,7 @@
 		2C3A788E3C71B3BA28516C90 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BF1B16E8EDC08010EE8417C /* RootView.swift */; };
 		2E5E20DC36DD909B4C72FBD2 /* AccountListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD3A314129AB98028A85CBE /* AccountListViewModel.swift */; };
 		324D658831ABB935DE3A793A /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5307B9EAE5151265F4FD8979 /* MainTabView.swift */; };
+		3462DB6DA098C59460FBD36A /* ExchangeRateUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F76203C59560F478DE7EB88 /* ExchangeRateUseCase.swift */; };
 		40C73EDF32539D6280D1C852 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B7544250D708B5F9F4110F /* SettingsView.swift */; };
 		437E0629C2A61CDC955978E0 /* CreditUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCFD235C85F0C63D7A2A6282 /* CreditUseCase.swift */; };
 		4EDC7ED7DDBCBB119F84F40A /* SettingsEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3647CC59342DAC15AFF99904 /* SettingsEndpoint.swift */; };
@@ -27,6 +29,7 @@
 		559DBF7B1D1EB863A26C715C /* AccountEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77BCCE44E4BB134E5A15DC62 /* AccountEndpoint.swift */; };
 		8349C4B6425EB54EDA69F59C /* SettingsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE9C301E94F88F460143393 /* SettingsUseCase.swift */; };
 		85076B63A61E3ED650BD8A3D /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BDEB0DF44CE1D8A1F3DF26F /* SettingsViewModel.swift */; };
+		9065F0CC9259854927D8D98B /* ExchangeRateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB82BE823FDC1CCF0D2D8AC0 /* ExchangeRateView.swift */; };
 		9C87593D4E2C2B8718792E50 /* AccountUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B6F12455BA8A14A9F60E0E0 /* AccountUseCase.swift */; };
 		A29F830FA6EE71BCC505EFA8 /* TransferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112CB0F3D41D60FE22DB94DE /* TransferView.swift */; };
 		ACCBB507AC951ABD0216317B /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82A351335A26BD09046589D7 /* DependencyContainer.swift */; };
@@ -39,10 +42,8 @@
 		CDD6613A94F514DCF244F16B /* CreditEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C0D563E1A10F35B6CB8E7F5 /* CreditEndpoint.swift */; };
 		CE3E0A4BDDEDCA2AD89E250A /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF1455BE6A6B4E0983BBF68 /* ProfileView.swift */; };
 		CE6FC59F539EDD51CA71B45A /* CreditListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C739933DE75E6FA00976F972 /* CreditListViewModel.swift */; };
-		D53B4DC9705F759B8423324A /* OperationRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AE6AF70B522582687C36A3 /* OperationRow.swift */; };
 		DA375361885F705F1957944D /* BankClientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3087AD8F01E354904E03E21C /* BankClientApp.swift */; };
 		DBE5B20029D05F88554648E6 /* TransferViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF622AAFA65D46807213352 /* TransferViewModel.swift */; };
-		E637B91118691242488F8219 /* PaymentRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7929C9A529E75652BB8230B0 /* PaymentRow.swift */; };
 		E76D8E0FEF2E7D70EE281EAB /* CreditDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE47456605D3582DAF1EEC27 /* CreditDetailView.swift */; };
 		E82B391B41D061610ADC645A /* UserEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = C65B6A27C84AF76AEE7C8D91 /* UserEndpoint.swift */; };
 		FA4DE5A8E7B7DD997620C456 /* TransferUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED4F0CD78F9CD5D578C2A0F4 /* TransferUseCase.swift */; };
@@ -70,8 +71,8 @@
 		5BF1B16E8EDC08010EE8417C /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		627A7ABF5D919018CC8B96E4 /* CreditApplicationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditApplicationViewModel.swift; sourceTree = "<group>"; };
 		6DD3A314129AB98028A85CBE /* AccountListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountListViewModel.swift; sourceTree = "<group>"; };
+		6F76203C59560F478DE7EB88 /* ExchangeRateUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateUseCase.swift; sourceTree = "<group>"; };
 		77BCCE44E4BB134E5A15DC62 /* AccountEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountEndpoint.swift; sourceTree = "<group>"; };
-		7929C9A529E75652BB8230B0 /* PaymentRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentRow.swift; sourceTree = "<group>"; };
 		82A351335A26BD09046589D7 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
 		82B7544250D708B5F9F4110F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9A87796D34E69C4FD5896AE8 /* CreditRatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditRatingView.swift; sourceTree = "<group>"; };
@@ -79,6 +80,7 @@
 		9AD92E46F6CF5807326C72CE /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
 		9BDEB0DF44CE1D8A1F3DF26F /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		A0A2B96E1D69D5879FC76F1F /* TransferEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferEndpoint.swift; sourceTree = "<group>"; };
+		AB9EF705306050B13FF3DB0B /* ExchangeRateViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateViewModel.swift; sourceTree = "<group>"; };
 		B7DC0E76AD7A6241F4FF60E4 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		B9A00624BE8C935B50194825 /* AccountDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDetailView.swift; sourceTree = "<group>"; };
 		C65B6A27C84AF76AEE7C8D91 /* UserEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEndpoint.swift; sourceTree = "<group>"; };
@@ -90,8 +92,8 @@
 		DE47456605D3582DAF1EEC27 /* CreditDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditDetailView.swift; sourceTree = "<group>"; };
 		E2A0988A2795EA4AA063A0B2 /* ClientConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientConfiguration.swift; sourceTree = "<group>"; };
 		EACB3B357E4465C5CB59BD3C /* CreateAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAccountView.swift; sourceTree = "<group>"; };
+		EB82BE823FDC1CCF0D2D8AC0 /* ExchangeRateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateView.swift; sourceTree = "<group>"; };
 		ED4F0CD78F9CD5D578C2A0F4 /* TransferUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferUseCase.swift; sourceTree = "<group>"; };
-		F7AE6AF70B522582687C36A3 /* OperationRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationRow.swift; sourceTree = "<group>"; };
 		FCD717D831AC6237EAD25B01 /* AccountListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountListView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -151,13 +153,20 @@
 			path = Profile;
 			sourceTree = "<group>";
 		};
+		56CABDEB3BB8910428B14AAE /* Exchange */ = {
+			isa = PBXGroup;
+			children = (
+				EB82BE823FDC1CCF0D2D8AC0 /* ExchangeRateView.swift */,
+			);
+			path = Exchange;
+			sourceTree = "<group>";
+		};
 		68A7EFA7A4E27D48BD77E425 /* Accounts */ = {
 			isa = PBXGroup;
 			children = (
 				B9A00624BE8C935B50194825 /* AccountDetailView.swift */,
 				FCD717D831AC6237EAD25B01 /* AccountListView.swift */,
 				EACB3B357E4465C5CB59BD3C /* CreateAccountView.swift */,
-				F7AE6AF70B522582687C36A3 /* OperationRow.swift */,
 			);
 			path = Accounts;
 			sourceTree = "<group>";
@@ -168,6 +177,7 @@
 				0B6F12455BA8A14A9F60E0E0 /* AccountUseCase.swift */,
 				4D3E0BE7C05E29973D8ED69C /* AuthUseCase.swift */,
 				DCFD235C85F0C63D7A2A6282 /* CreditUseCase.swift */,
+				6F76203C59560F478DE7EB88 /* ExchangeRateUseCase.swift */,
 				0CE9C301E94F88F460143393 /* SettingsUseCase.swift */,
 				ED4F0CD78F9CD5D578C2A0F4 /* TransferUseCase.swift */,
 				0DB9167895F17D870CED92C1 /* UserUseCase.swift */,
@@ -190,7 +200,6 @@
 				23E7AC2F807B77761D9824C8 /* CreditApplicationView.swift */,
 				DE47456605D3582DAF1EEC27 /* CreditDetailView.swift */,
 				4E1FF82EE6DBBE42FC9348E0 /* CreditListView.swift */,
-				7929C9A529E75652BB8230B0 /* PaymentRow.swift */,
 			);
 			path = Credits;
 			sourceTree = "<group>";
@@ -218,6 +227,7 @@
 				68A7EFA7A4E27D48BD77E425 /* Accounts */,
 				E76B2EDD80A427F69841900C /* Auth */,
 				A59B0BD8179A3C5528271403 /* Credits */,
+				56CABDEB3BB8910428B14AAE /* Exchange */,
 				70F997EDAE7762FEB9E07C15 /* Main */,
 				453021AB9EA2DA52E9E6212A /* Profile */,
 				DB37FE5B4CFDE2286ABAB015 /* Settings */,
@@ -274,6 +284,7 @@
 				627A7ABF5D919018CC8B96E4 /* CreditApplicationViewModel.swift */,
 				4C358091479CF641D59A811D /* CreditDetailViewModel.swift */,
 				C739933DE75E6FA00976F972 /* CreditListViewModel.swift */,
+				AB9EF705306050B13FF3DB0B /* ExchangeRateViewModel.swift */,
 				45B98F3CA54C18B3960885B4 /* ProfileViewModel.swift */,
 				9BDEB0DF44CE1D8A1F3DF26F /* SettingsViewModel.swift */,
 				1FF622AAFA65D46807213352 /* TransferViewModel.swift */,
@@ -361,10 +372,11 @@
 				FAC18B485F3B38C921C99ED4 /* CreditRatingView.swift in Sources */,
 				437E0629C2A61CDC955978E0 /* CreditUseCase.swift in Sources */,
 				ACCBB507AC951ABD0216317B /* DependencyContainer.swift in Sources */,
+				3462DB6DA098C59460FBD36A /* ExchangeRateUseCase.swift in Sources */,
+				9065F0CC9259854927D8D98B /* ExchangeRateView.swift in Sources */,
+				1D33EFE643EFB17C320774DF /* ExchangeRateViewModel.swift in Sources */,
 				C6B31D0278E14D2500C6A66B /* LoginView.swift in Sources */,
 				324D658831ABB935DE3A793A /* MainTabView.swift in Sources */,
-				D53B4DC9705F759B8423324A /* OperationRow.swift in Sources */,
-				E637B91118691242488F8219 /* PaymentRow.swift in Sources */,
 				CE3E0A4BDDEDCA2AD89E250A /* ProfileView.swift in Sources */,
 				13577FB7580E712D1D082E73 /* ProfileViewModel.swift in Sources */,
 				195926571ED9B0BA058AA93B /* RegisterView.swift in Sources */,

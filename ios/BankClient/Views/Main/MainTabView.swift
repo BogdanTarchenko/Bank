@@ -20,17 +20,23 @@ struct MainTabView: View {
                 }
                 .tag(1)
 
+            ExchangeRateView()
+                .tabItem {
+                    Label("Валюты", systemImage: "dollarsign.arrow.circlepath")
+                }
+                .tag(2)
+
             ProfileView()
                 .tabItem {
                     Label("Профиль", systemImage: "person")
                 }
-                .tag(2)
+                .tag(3)
 
             SettingsView()
                 .tabItem {
                     Label("Настройки", systemImage: "gearshape")
                 }
-                .tag(3)
+                .tag(4)
         }
         .onChange(of: selectedTab) { _, _ in
             // При переключении табов — синхронизировать настройки с сервером
