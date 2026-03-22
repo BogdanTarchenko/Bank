@@ -28,25 +28,6 @@ struct CreditRatingView: View {
         .navigationTitle("Кредитный рейтинг")
     }
 
-    private var gradeDisplayName: String {
-        switch rating.grade.uppercased() {
-        case "EXCELLENT": "Отличный"
-        case "GOOD": "Хороший"
-        case "FAIR": "Средний"
-        case "POOR": "Низкий"
-        case "BAD": "Плохой"
-        default: rating.grade
-        }
-    }
-
-    private var gradeColor: Color {
-        switch rating.grade.uppercased() {
-        case "EXCELLENT": .green
-        case "GOOD": .blue
-        case "FAIR": .orange
-        case "POOR": .red
-        case "BAD": .red
-        default: .secondary
-        }
-    }
+    private var gradeDisplayName: String { CreditGrade.displayName(rating.grade) }
+    private var gradeColor: Color { CreditGrade.color(rating.grade) }
 }

@@ -26,12 +26,12 @@ final class AccountListViewModel {
             state = .loading
         }
         do {
-            let accounts = try await useCase.getAccounts(userId: userId)
+            let accounts = try await useCase.getAccounts()
             state = .loaded(accounts.filter { !$0.isClosed && $0.accountType == .PERSONAL })
         } catch is CancellationError {
             state = previousState
         } catch {
-            state = .error((error as? NetworkError)?.localizedDescription ?? error.localizedDescription)
+            state = .error(error.userMessage)
         }
     }
 
@@ -39,11 +39,11 @@ final class AccountListViewModel {
         isActionLoading = true
         actionError = nil
         do {
-            _ = try await useCase.createAccount(userId: userId, currency: selectedCurrency)
+            _ = try await useCase.createAccount(currency: selectedCurrency)
             showCreateSheet = false
             await load()
         } catch {
-            actionError = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            actionError = error.userMessage
         }
         isActionLoading = false
     }

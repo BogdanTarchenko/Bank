@@ -98,27 +98,31 @@ public actor HTTPClient {
             throw NetworkError.unauthorized
         case 403:
             Task { await onForbidden?() }
-            throw NetworkError.forbidden
+            let msg = serverMessage(from: data)
+            throw NetworkError.forbidden(msg)
         case 404:
-            throw NetworkError.notFound
+            throw NetworkError.notFound(serverMessage(from: data))
+        case 400:
+            throw NetworkError.badRequest(serverMessage(from: data))
         case 409:
-            if let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) {
-                throw NetworkError.conflict(errorResponse.message)
-            }
-            throw NetworkError.conflict("Conflict")
+            throw NetworkError.conflict(serverMessage(from: data))
+        case 422:
+            throw NetworkError.unprocessable(serverMessage(from: data))
         case 400...499:
-            if let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) {
-                throw NetworkError.serverError(errorResponse)
-            }
-            throw NetworkError.unknown(response.statusCode)
+            throw NetworkError.unknown(response.statusCode, serverMessage(from: data))
         case 500...599:
-            if let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) {
-                throw NetworkError.serverError(errorResponse)
+            let msg = serverMessage(from: data)
+            if response.statusCode == 503 {
+                throw NetworkError.serviceUnavailable(msg)
             }
-            throw NetworkError.unknown(response.statusCode)
+            throw NetworkError.serverError(msg)
         default:
-            throw NetworkError.unknown(response.statusCode)
+            throw NetworkError.unknown(response.statusCode, serverMessage(from: data))
         }
+    }
+
+    private func serverMessage(from data: Data) -> String {
+        (try? decoder.decode(ErrorResponse.self, from: data))?.message ?? ""
     }
 }
 

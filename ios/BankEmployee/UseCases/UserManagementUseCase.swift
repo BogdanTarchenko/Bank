@@ -23,4 +23,9 @@ final class UserManagementUseCase: Sendable {
     func unblockUser(id: Int64) async throws -> User {
         try await client.request(EmployeeUserEndpoint.unblock(id))
     }
+
+    func updateRoles(id: Int64, roles: Set<UserRole>) async throws -> User {
+        let req = UpdateRolesRequest(roles: roles.map(\.rawValue))
+        return try await client.request(EmployeeUserEndpoint.updateRoles(id, req))
+    }
 }

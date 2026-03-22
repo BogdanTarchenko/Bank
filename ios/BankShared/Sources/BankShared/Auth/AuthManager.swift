@@ -132,10 +132,8 @@ public final class AuthManager: ObservableObject {
             throw NetworkError.networkFailure("Invalid response")
         }
         guard (200...299).contains(httpResponse.statusCode) else {
-            if let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) {
-                throw NetworkError.serverError(errorResponse)
-            }
-            throw NetworkError.unknown(httpResponse.statusCode)
+            let msg = (try? decoder.decode(ErrorResponse.self, from: data))?.message ?? ""
+            throw NetworkError.serverError(msg)
         }
     }
 

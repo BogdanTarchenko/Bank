@@ -27,7 +27,7 @@ final class ProfileViewModel {
         } catch is CancellationError {
             state = previousState
         } catch {
-            state = .error((error as? NetworkError)?.localizedDescription ?? error.localizedDescription)
+            state = .error(error.userMessage)
         }
     }
 }
