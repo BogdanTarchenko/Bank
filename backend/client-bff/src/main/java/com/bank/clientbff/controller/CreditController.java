@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClientResponseException;
 
 @RestController
 @RequestMapping("/api/v1/credits")
@@ -50,7 +51,7 @@ public class CreditController {
             ownershipService.checkAccountOwnership(accountId, userId);
 
             return creditServiceClient.post("/api/v1/credits", objectMapper.writeValueAsString(node));
-        } catch (ResourceAccessDeniedException e) {
+        } catch (ResourceAccessDeniedException | RestClientResponseException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("Ошибка создания кредита", e);
