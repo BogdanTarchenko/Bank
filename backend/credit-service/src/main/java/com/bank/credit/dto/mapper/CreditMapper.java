@@ -35,6 +35,7 @@ public final class CreditMapper {
                 credit.getAccountId(),
                 credit.getTariff().getId(),
                 credit.getTariff().getName(),
+                credit.getTariff().getCurrency(),
                 credit.getPrincipal(),
                 credit.getRemaining(),
                 accruedInterest,
