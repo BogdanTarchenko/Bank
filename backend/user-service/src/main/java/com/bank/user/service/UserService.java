@@ -6,6 +6,7 @@ import com.bank.user.dto.UserResponse;
 import com.bank.user.dto.mapper.UserMapper;
 import com.bank.user.exception.EmailAlreadyExistsException;
 import com.bank.user.exception.UserNotFoundException;
+import com.bank.user.model.Role;
 import com.bank.user.model.User;
 import com.bank.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -68,6 +70,14 @@ public class UserService {
             user.setPhone(request.phone());
         }
 
+        return UserMapper.toResponse(userRepository.save(user));
+    }
+
+    @Transactional
+    public UserResponse updateUserRoles(Long id, Set<Role> roles) {
+        User user = findById(id);
+        user.getRoles().clear();
+        user.getRoles().addAll(roles);
         return UserMapper.toResponse(userRepository.save(user));
     }
 
