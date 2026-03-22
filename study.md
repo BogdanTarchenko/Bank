@@ -23,7 +23,7 @@
 
 ## 1. Обзор архитектуры
 
-Система построена как **Java-монорепо** с шестью микросервисами, объединёнными в единое приложение через общий Gradle multi-module build. Каждый сервис — это отдельный Spring Boot процесс со своей базой данных.
+Система построена как **Java-монорепо** с шестью микросервисами, объединёнными в единый Gradle multi-module build. Каждый сервис — отдельный Spring Boot процесс со своей базой данных.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -35,60 +35,68 @@
                  │                            │
 ┌────────────────▼──────────┐   ┌─────────────▼─────────────┐
 │      client-bff :8084     │   │    employee-bff :8085      │
-│  BFF для клиентского      │   │  BFF для сотрудников       │
-│  приложения               │   │                            │
-│  • OAuth2 Resource Server │   │  • OAuth2 Resource Server  │
-│  • Ownership checks       │   │  • Proxy to backends       │
-│  • User settings (Redis)  │   │  • User settings (Redis)   │
-└──────┬──────────────┬─────┘   └──────┬──────────────┬──────┘
-       │              │                │              │
-       │       ┌──────▼────────────────▼──────┐      │
-       │       │      Kafka Consumer           │      │
-       │       │  bank.operation-notifications │      │
-       │       └──────────────────────────────┘      │
-       │                                             │
-       │  REST (RestClient)                          │  REST (RestClient)
-       │                                             │
-┌──────▼──────────┐  ┌─────────────────┐  ┌─────────▼───────────┐
-│  core-service   │  │  user-service   │  │   credit-service    │
-│     :8080       │  │     :8082       │  │      :8083          │
-│                 │  │                 │  │                     │
-│  • Accounts     │  │  • Users        │  │  • Credits          │
-│  • Operations   │  │  • Roles        │  │  • Tariffs          │
-│  • Transfers    │  │                 │  │  • Payments         │
-│  • Kafka prod.  │  │                 │  │  • Scheduler        │
-│  • Outbox       │  │                 │  │  • CoreClient       │
-└──────┬──────────┘  └─────────────────┘  └─────────────────────┘
-       │
-  Kafka Producer
-  (bank.operations)
-       │
-┌──────▼──────────┐
-│  Kafka Consumer │
-│  (core-service) │
-│  bank.operations│
-└─────────────────┘
+│  BFF для iOS клиента      │   │  BFF для сотрудников       │
+│  • hasRole(CLIENT)        │   │  • hasRole(EMPLOYEE)       │
+│  • Ownership checks       │   │  • Role management         │
+│  • User settings          │   │  • User settings           │
+│  • Token invalidation     │   │  • Token invalidation      │
+│  • WebSocket relay        │   │  • WebSocket relay         │
+└──────┬─────────┬──────────┘   └───────┬─────────┬──────────┘
+       │         │                      │         │
+       │   Kafka Consumer               │   Kafka Consumer
+       │ bank.operation-notifications   │ bank.operation-notifications
+       │         │ (groupId: client-bff)│         │ (groupId: employee-bff)
+       │         └──────────┬───────────┘         │
+       │                    │ WebSocket            │
+       │  REST (RestClient) │                      │ REST (RestClient)
+       │                    ▼                      │
+┌──────▼────────────────────────────┬──────────────▼──────────────────┐
+│         core-service :8080        │         credit-service :8083     │
+│  • Счета (PERSONAL + MASTER)      │  • Кредиты, тарифы              │
+│  • Операции (async via Kafka)     │  • График платежей              │
+│  • Переводы (inter-account)       │  • Кредитный рейтинг            │
+│  • Transactional Outbox           │  • Scheduler (ежедневные платежи)│
+│  • WebSocket (STOMP)              │  • HTTP → core-service           │
+│  • Kafka producer + consumer      │                                  │
+└──────┬────────────────────────────┘                                  │
+       │                                                               │
+  outbox_events → KafkaProducer                                        │
+  bank.operations + bank.operation-notifications                       │
+       │                                                               │
+┌──────▼────────────────────────────┐                                  │
+│  KafkaOperationConsumer           │ ←────────────────────────────────┘
+│  (core-service, groupId: core)    │   credit-service вызывает:
+│  • processOperation(event)        │   • /api/v1/master-account/transfer
+│  • обновляет балансы              │   • /api/v1/accounts/{id}/withdraw
+│  • шлёт WebSocket + Kafka notif.  │
+└───────────────────────────────────┘
 
-┌─────────────────────────────────────────┐
-│            auth-service :8081           │
-│                                         │
-│  • OAuth2 Authorization Server          │
-│  • Login form (HTML)                    │
-│  • JWT issuer (RSA 2048)                │
-│  • Manages AuthUsers                    │
-│  • Calls user-service on register       │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                     user-service :8082                              │
+│  • Профили пользователей, роли (CLIENT / EMPLOYEE / ADMIN)          │
+│  • Блокировка пользователей                                         │
+│  • Вызывается: auth-service (register), BFF (resolve userId, roles) │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                     auth-service :8081                              │
+│  • OAuth2 Authorization Server (Spring Authorization Server)        │
+│  • Форм-вход (HTML /login)                                          │
+│  • Выдаёт JWT-токены (AUTHORIZATION_CODE + REFRESH_TOKEN)           │
+│  • При регистрации → синхронный HTTP вызов → user-service           │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Принципы дизайна
 
 | Принцип | Реализация |
 |---------|-----------|
-| **Service-per-database** | Каждый сервис имеет свою PostgreSQL БД, прямой доступ к чужой БД запрещён |
+| **Service-per-database** | Каждый сервис — своя PostgreSQL БД; прямой доступ к чужой БД запрещён |
 | **BFF pattern** | client-bff и employee-bff — серверная часть конкретных клиентов, хранят UI-настройки |
-| **Event-driven** | Операции по счетам проходят через Kafka, гарантируя at-least-once доставку |
+| **Event-driven** | Операции по счетам идут через Kafka: at-least-once доставка |
+| **Transactional Outbox** | Продюсеры сохраняют события в БД до отправки в Kafka |
 | **OAuth2 SSO** | Единая точка входа через auth-service, пароль вводится только там |
-| **Idempotency** | Каждая операция имеет UUID-ключ идемпотентности, дубликаты пропускаются |
+| **Idempotency** | Каждая операция имеет UUID-ключ, повторное выполнение безопасно |
 
 ---
 
@@ -96,1191 +104,790 @@
 
 ### Порты сервисов
 
-| Сервис | Порт | БД порт | БД имя |
-|--------|------|---------|--------|
-| core-service | 8080 | 5438 | bank_core |
-| auth-service | 8081 | 5433 | bank_auth |
-| user-service | 8082 | 5434 | bank_user |
-| credit-service | 8083 | 5435 | bank_credit |
-| client-bff | 8084 | 5436 | bank_client_bff |
-| employee-bff | 8085 | 5437 | bank_employee_bff |
+| Сервис | Порт | БД | БД порт |
+|--------|------|----|---------|
+| auth-service | 8081 | bank_auth | 5433 |
+| core-service | 8080 | bank_core | 5432 |
+| user-service | 8082 | bank_user | 5434 |
+| credit-service | 8083 | bank_credit | 5435 |
+| client-bff | 8084 | bank_client_bff | 5436 |
+| employee-bff | 8085 | bank_employee_bff | 5437 |
 
-### Брокер и кеш
+### Docker Compose сервисы
 
-| Компонент | Адрес | Назначение |
-|-----------|-------|-----------|
-| Kafka (внешний) | `localhost:9094` | Для локальной разработки |
-| Kafka (Docker) | `kafka:9092` | Внутри Docker сети |
-| Redis | `localhost:6379` | Сессии BFF-сервисов, кеш курсов валют |
+- **PostgreSQL x6** — по одной БД на сервис (изоляция данных)
+- **Redis** — хранение инвалидированных токенов и кеш сессий в BFF
+- **Apache Kafka + Zookeeper** — брокер событий для операций
 
-Kafka работает в **KRaft mode** (без ZooKeeper), образ `apache/kafka:3.9.0`.
+### Tech Stack
+
+| Компонент | Технология |
+|-----------|-----------|
+| Язык | Java 21 |
+| Фреймворк | Spring Boot 3.4 |
+| Сборка | Gradle Kotlin DSL (multi-module) |
+| БД | PostgreSQL 17 |
+| Миграции | Flyway (versioned SQL) |
+| ORM | Spring Data JPA + Hibernate |
+| Брокер | Apache Kafka |
+| Кеш/сессии | Redis |
+| Аутентификация | Spring Authorization Server (OAuth2) |
+| Real-time | WebSocket STOMP |
+| HTTP клиент | RestClient (Spring 6) |
+| Boilerplate | Lombok |
 
 ---
 
 ## 3. OAuth2 и безопасность
 
-### 3.1 Общая схема аутентификации
-
-Система использует **OAuth 2.0 Authorization Code Flow с PKCE**. Пароль пользователя видит **только auth-service** — это принципиальное требование безопасности.
+### Общая схема
 
 ```
-iOS App / Web App
-      │
-      │  1. Открывает браузер/WebView на auth-service
-      ▼
-auth-service :8081  ←──── Пользователь вводит логин/пароль ЗДЕСЬ
-      │
-      │  2. Выдаёт Authorization Code
-      ▼
-BFF (client-bff или employee-bff)
-      │
-      │  3. Обменивает Code на Access Token (JWT) + Refresh Token
-      ▼
-iOS App / Web App  ←──── Получает JWT, хранит на устройстве
-      │
-      │  4. Все последующие запросы: Authorization: Bearer {jwt}
-      ▼
-BFF  ──── проверяет JWT ──── делает запросы к backend-сервисам
+iOS App                  auth-service :8081              client-bff :8084
+   │                           │                               │
+   │  1. GET /oauth2/authorization/auth-service                │
+   │──────────────────────────────────────────────────────────►│
+   │                           │ 2. redirect → /login          │
+   │◄──────────────────────────────────────────────────────────│
+   │                           │                               │
+   │  3. POST /login (email + password)                        │
+   │──────────────────────────►│                               │
+   │                           │ 4. redirect с code            │
+   │◄──────────────────────────│                               │
+   │                           │                               │
+   │  5. POST /oauth2/token (code + PKCE verifier)             │
+   │──────────────────────────────────────────────────────────►│
+   │                           │◄──────────────────────────────│
+   │                           │  6. выдаёт access_token + refresh_token
+   │◄──────────────────────────────────────────────────────────│
+   │                           │                               │
+   │  7. API запрос (Bearer: access_token)                     │
+   │──────────────────────────────────────────────────────────►│
+   │                           │  8. проверяет JWT (подпись, claims)
+   │◄──────────────────────────────────────────────────────────│
 ```
 
-### 3.2 Auth-Service как Authorization Server
+### Зарегистрированные OAuth2-клиенты
 
-**Зарегистрированные OAuth2-клиенты:**
+| Клиент | Redirect URI | Scopes |
+|--------|-------------|--------|
+| `client-bff` | `http://localhost:8084/login/oauth2/code/auth-service`, `bankapp://callback` | openid, profile, accounts.read, accounts.write, credits.read, credits.write |
+| `employee-bff` | `http://localhost:8085/login/oauth2/code/auth-service`, `bankemployee://callback` | openid, profile, accounts.read, accounts.write, credits.read, credits.write, admin |
 
-```
-client-bff:
-  clientId:     client-bff
-  secret:       client-bff-secret (bcrypt)
-  grantTypes:   AUTHORIZATION_CODE, REFRESH_TOKEN
-  redirectUris: http://localhost:8084/login/oauth2/code/auth-service
-                http://localhost:3000/callback
-                bankapp://callback          ← для iOS Universal Link
-  scopes:       openid, profile, accounts.read, accounts.write,
-                credits.read, credits.write
-  PKCE:         обязателен
-  tokenTTL:     access = 1 час, refresh = 30 дней
+- **Grant types**: `AUTHORIZATION_CODE` + `REFRESH_TOKEN`
+- **PKCE**: обязателен (для мобильных клиентов без client_secret)
+- **Access token TTL**: 1 час
+- **Refresh token TTL**: 30 дней
 
-employee-bff:
-  clientId:     employee-bff
-  secret:       employee-bff-secret
-  redirectUris: http://localhost:8085/login/oauth2/code/auth-service
-                http://localhost:3001/callback
-                bankemployee://callback
-  scopes:       openid, profile, admin
-  PKCE:         обязателен
-  tokenTTL:     access = 1 час, refresh = 30 дней
+### JWT Claims
+
+Стандартные OIDC-поля + кастомные, добавляемые `TokenCustomizer`:
+
+```json
+{
+  "sub": "user@example.com",
+  "iat": 1711000000,
+  "exp": 1711003600,
+  "roles": ["ROLE_CLIENT"],
+  "scope": "openid profile accounts.read accounts.write"
+}
 ```
 
-**JWT-токен** подписывается RSA 2048-bit ключом. Содержит:
-- `sub`: email пользователя (используется как username)
-- `roles`: список ролей (`CLIENT`, `EMPLOYEE`, `ADMIN`, `MANAGER`)
-- `iss`: `http://localhost:8081`
-- `exp`: время истечения
+Роли из `roles` claim конвертируются в Spring Security `GrantedAuthority` через `RolesClaimConverter` в BFF.
 
-**Как auth-service знает роли пользователя:** При выдаче JWT он вызывает `user-service` через REST, получает список ролей и добавляет их в token claims через кастомный `OAuth2TokenCustomizer`.
+### Безопасность внутренних сервисов
 
-### 3.3 AuthUser vs User
+**core-service, user-service, credit-service** — `permitAll()` на все эндпоинты. Безопасность обеспечивается на уровне BFF:
+- только client-bff и employee-bff обращаются к внутренним сервисам;
+- внутренние сервисы не экспонированы наружу.
 
-В системе есть **два разных пользовательских хранилища**:
+**client-bff** — `hasRole("CLIENT")` для всех запросов, кроме WebSocket.
 
-| | auth-service | user-service |
-|-|-------------|-------------|
-| Таблица | `auth_users` | `users` |
-| Хранит | email + bcrypt-пароль + enabled | email + имя + телефон + роли + blocked |
-| Цель | Аутентификация (SSO) | Бизнес-данные профиля |
-| Синхронизация | При регистрации auth-service вызывает user-service |
+**employee-bff** — `hasRole("EMPLOYEE")` для всех запросов, кроме WebSocket.
 
-Оба хранят `email` как общий идентификатор. Никакого общего ключа нет — привязка только по email.
+### Инвалидация токенов (Token Invalidation)
 
-### 3.4 Регистрация пользователя
+При изменении ролей пользователя employee-bff записывает в Redis:
 
 ```
-Client → POST /api/v1/auth/register
-         {email, password, firstName, lastName, phone, roles}
-              │
-              ▼
-         auth-service:
-           1. Проверяет email уникальность в auth_users
-           2. Сохраняет AuthUser (bcrypt-хеш пароля)
-           3. Вызывает POST /api/v1/users → user-service
-              {email, firstName, lastName, phone, roles}
-           4. user-service создаёт User с ролями
-           5. Возвращает {message: "Регистрация успешна"}
+KEY:   roles:invalidated:{user@email.com}
+VALUE: System.currentTimeMillis()  (метка инвалидации)
+TTL:   30 дней (время жизни refresh token)
 ```
 
-Если `user-service` недоступен — регистрация упадёт. Отдельная saga/компенсация не реализована.
+`TokenInvalidationFilter` в обоих BFF при каждом запросе:
+1. Читает `iat` (issued at) из JWT
+2. Достаёт метку инвалидации из Redis по ключу `roles:invalidated:{email}`
+3. Если `iat < invalidatedAt` → возвращает `401 UNAUTHORIZED`
+4. Клиент вынужден пройти re-login и получить новый токен с актуальными ролями
 
-### 3.5 Resource Server (BFF-сервисы)
+### Регистрация пользователя
 
-Оба BFF настроены как **OAuth2 Resource Server**:
-
-```yaml
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8081
+```
+Client ──POST /api/v1/auth/register──► auth-service
+                                            │
+                          создаёт AuthUser в auth_users
+                                            │
+                          POST /api/v1/users ──► user-service
+                                            │
+                          создаёт User с ролью CLIENT в users
 ```
 
-Spring автоматически:
-1. Загружает JWKS (публичный ключ RSA) с `http://localhost:8081/.well-known/jwks.json`
-2. Верифицирует подпись каждого входящего JWT
-3. Проверяет срок действия (`exp`)
-
-Роли извлекаются кастомным `RolesClaimConverter`:
-- Читает claim `roles` из JWT
-- Добавляет префикс `ROLE_` → `ROLE_CLIENT`, `ROLE_ADMIN` и т.д.
-- Spring Security видит их как стандартные `GrantedAuthority`
-
-### 3.6 Публичные и защищённые эндпоинты
-
-**auth-service:**
-```
-Публичные:  /api/v1/auth/register, /login, /css/**, /js/**,
-            /swagger-ui/**, /v3/api-docs/**
-Остальное:  требует JWT
-```
-
-**client-bff / employee-bff:**
-```
-Публичные:  /ws/**  (WebSocket подключение без JWT — STOMP-фрейм несёт токен)
-Остальное:  требует JWT
-```
-
-**core-service, user-service, credit-service:**
-Не настроены как Resource Server — **доступны только из внутренней сети**. Нет прямого доступа извне.
-
-### 3.7 CORS
-
-BFF-сервисы и auth-service разрешают `*` origins с `credentials: true`. Это допустимо в dev-окружении; для prod нужен whitelist.
+Пароль хранится только в auth-service (BCrypt hash). user-service паролей не знает.
 
 ---
 
 ## 4. Сервисы — подробно
 
-### 4.1 auth-service (порт 8081)
+### 4.1 auth-service (:8081)
 
-**Единственный контроллер:** `AuthController`
-
-```
-POST /api/v1/auth/register
-  Body:  { email, password, firstName, lastName, phone, roles? }
-  200:   { message: "Регистрация успешна" }
-  409:   EmailAlreadyExistsException
-
-GET /userinfo  (OAuth2 standard endpoint)
-  Header: Authorization: Bearer {jwt}
-  200:   { sub: email, email: email }
-```
-
-**Логин** происходит через стандартный OAuth2 flow — не через REST API. Пользователь перенаправляется на `GET /login` (HTML-форма Spring Security), вводит email/пароль, и auth-service через `CustomUserDetailsService` проверяет пароль:
-
-```
-CustomUserDetailsService.loadUserByUsername(email):
-  1. GET /api/v1/users/by-email?email={email} → user-service
-  2. Проверяет blocked=false
-  3. Получает роли
-  4. Ищет AuthUser в auth_users по email
-  5. Возвращает UserDetails с паролем + GrantedAuthorities
-```
-
-Пароль сравнивает Spring Security через `BCryptPasswordEncoder`. Auth-service **не хранит** бизнес-роли у себя — берёт их из user-service при каждой аутентификации.
-
----
-
-### 4.2 user-service (порт 8082)
-
-Хранит профили пользователей. Вызывается auth-service и BFF-сервисами.
+**Назначение**: OAuth2 Authorization Server. Единственная точка входа паролей.
 
 **Эндпоинты:**
-
 ```
-POST   /api/v1/users                   → 201 UserResponse
-GET    /api/v1/users                   → List<UserResponse>
-GET    /api/v1/users/{id}              → UserResponse
-GET    /api/v1/users/by-email?email=   → UserResponse       ← критичный для SSO
-PUT    /api/v1/users/{id}              → UserResponse
-PATCH  /api/v1/users/{id}/roles        → UserResponse
-PATCH  /api/v1/users/{id}/block        → UserResponse
-PATCH  /api/v1/users/{id}/unblock      → UserResponse
-GET    /api/v1/users/roles             → List<Role>
+POST /api/v1/auth/register    — регистрация нового пользователя
+GET  /login                   — HTML форма входа (для OAuth2 flow)
+POST /oauth2/token            — обмен authorization code на JWT
+GET  /oauth2/authorization/*  — начало OAuth2 flow (redirect)
 ```
 
-**UserResponse:**
-```json
-{
-  "id": 1,
-  "email": "alice@example.com",
-  "firstName": "Alice",
-  "lastName": "Smith",
-  "phone": "+79001234567",
-  "roles": ["CLIENT"],
-  "blocked": false,
-  "createdAt": "2024-01-01T00:00:00",
-  "updatedAt": "2024-01-01T00:00:00"
-}
+**Модели данных:**
+```
+auth_users: id, email, password_hash, enabled, created_at
+OAuth2 системные таблицы (JdbcOAuth2AuthorizationService):
+  oauth2_authorization, oauth2_authorization_consent, oauth2_registered_client
 ```
 
-**Роли:** `CLIENT`, `ADMIN`, `EMPLOYEE`, `MANAGER`
-
-Блокировка пользователя (`blocked=true`) — только через PATCH. Заблокированный пользователь не сможет войти (проверяется в `CustomUserDetailsService`).
+**Межсервисное взаимодействие:**
+- → `user-service`: `POST /api/v1/users` при регистрации (синхронный RestClient)
 
 ---
 
-### 4.3 core-service (порт 8080)
+### 4.2 core-service (:8080)
 
-Центральный сервис — управляет счетами и операциями.
-
-**Эндпоинты счетов:**
-
-```
-POST   /api/v1/accounts                         → 201 AccountResponse
-GET    /api/v1/accounts?userId={id}             → List<AccountResponse>
-GET    /api/v1/accounts/{id}                    → AccountResponse
-DELETE /api/v1/accounts/{id}                    → 204  (только если balance=0)
-
-POST   /api/v1/accounts/{id}/deposit            → 202  (async)
-POST   /api/v1/accounts/{id}/withdraw           → 202  (async)
-GET    /api/v1/accounts/{id}/operations?page=0&size=20 → Page<OperationResponse>
-
-POST   /api/v1/transfers                        → 202  (async)
-```
-
-**Мастер-счета (системные):**
-```
-GET    /api/v1/master-account                   → List<AccountResponse>
-GET    /api/v1/master-account?currency=RUB      → AccountResponse
-POST   /api/v1/master-account/transfer          → 202  (async)
-```
-
-Мастер-счета — по одному на каждую валюту (RUB, USD, EUR). Через них credit-service зачисляет кредитные средства на счёт клиента.
-
-**Типы аккаунтов и операций:**
-
-```
-AccountType:   PERSONAL (пользовательский), MASTER (системный)
-Currency:      RUB, USD, EUR
-OperationType: DEPOSIT, WITHDRAWAL, TRANSFER_IN, TRANSFER_OUT
-```
-
-**Оптимистичная блокировка:**
-Поле `version` на `Account` (JPA `@Version`). Если два потока одновременно читают и изменяют один счёт — один из них получит `OptimisticLockingFailureException`.
-
-**Пессимистичная блокировка для трансферов:**
-При обработке перевода через Kafka-консьюмер оба счёта блокируются с `SELECT FOR UPDATE` в строгом порядке (по возрастанию ID), чтобы исключить deadlock:
-
-```java
-if (fromId < toId) {
-    fromAccount = lockAccount(fromId);  // SELECT FOR UPDATE
-    toAccount   = lockAccount(toId);
-} else {
-    toAccount   = lockAccount(toId);
-    fromAccount = lockAccount(fromId);
-}
-```
-
----
-
-### 4.4 credit-service (порт 8083)
-
-Управляет кредитами, тарифами и платежами.
+**Назначение**: управление счетами, выполнение финансовых операций, переводы, курсы валют.
 
 **Эндпоинты:**
-
 ```
-GET    /api/v1/tariffs                          → List<TariffResponse>
-POST   /api/v1/tariffs                          → 201 TariffResponse
+# Счета
+POST   /api/v1/accounts                   — создать счёт
+GET    /api/v1/accounts                   — все счета (или ?userId=X)
+GET    /api/v1/accounts/{id}              — счёт по ID
+DELETE /api/v1/accounts/{id}              — закрыть счёт (баланс должен быть 0)
 
-POST   /api/v1/credits                          → 201 CreditResponse
-GET    /api/v1/credits?userId={id}              → List<CreditResponse>
-GET    /api/v1/credits/{id}                     → CreditResponse
-GET    /api/v1/credits/{id}/payments            → List<PaymentResponse>
-POST   /api/v1/credits/{id}/repay               → CreditResponse
+# Операции (асинхронные — возвращают 202 ACCEPTED)
+POST   /api/v1/accounts/{id}/deposit      — пополнение
+POST   /api/v1/accounts/{id}/withdraw     — снятие
+GET    /api/v1/accounts/{id}/operations   — история операций (пагинация)
 
-GET    /api/v1/users/{id}/credit-rating         → CreditRatingResponse
-```
+# Переводы (асинхронные — 202 ACCEPTED)
+POST   /api/v1/transfers                  — перевод между счетами
 
-**Расчёт ежедневного платежа (аннуитет):**
+# Мастер-счета (используются credit-service)
+GET    /api/v1/master-account             — список всех мастер-счетов
+GET    /api/v1/master-account?currency=X  — мастер-счёт по валюте
+POST   /api/v1/master-account/transfer    — перевод с мастер-счёта на счёт клиента
 
-```
-dailyRate    = annualRate / (365 * 24 * 60)   ← минутная ставка
-dailyPayment = principal * dailyRate / (1 - (1 + dailyRate)^(-termDays))
-
-Если rate = 0:
-dailyPayment = principal / termDays
-```
-
-При создании кредита генерируется полный **график платежей** (`payments`) — по одному на каждый день срока.
-
-**Начисление процентов (per-minute accrual):**
-
-Проценты начисляются поминутно, но применяются при досрочном или плановом погашении:
-
-```
-minuteRate       = annualRate / (365 * 24 * 60)
-minutesElapsed   = Duration.between(lastAccrualAt, now()).toMinutes()
-accruedInterest  = remaining * ((1 + minuteRate)^minutesElapsed - 1)
+# WebSocket STOMP
+WS     /ws/operations                     — точка подключения
+SUB    /topic/accounts/{id}/operations    — подписка на события счёта
 ```
 
-**Credit Rating (кредитный рейтинг):**
+**Ключевые модели данных:**
 
+```sql
+accounts:
+  id, user_id, currency (RUB/USD/EUR), balance (NUMERIC 19,4 >= 0),
+  account_type (PERSONAL/MASTER), is_closed, created_at, updated_at,
+  version (для optimistic locking)
+  UNIQUE(account_type, currency) WHERE account_type='MASTER'
+
+operations:
+  id, idempotency_key (UUID UNIQUE), account_id, type (DEPOSIT/WITHDRAWAL/TRANSFER_IN/TRANSFER_OUT),
+  amount, currency, related_account_id, exchange_rate, description, created_at
+
+outbox_events:
+  id, topic, event_key, payload (JSON text), status (PENDING/SENT/FAILED),
+  retry_count, created_at, sent_at
+  INDEX ON (status, created_at) WHERE status='PENDING'
 ```
-base  = 850
-score = base - overduePayments * 50 + closedCredits * 10
-score = clamp(score, 300, 850)
 
-Грейды:
-  EXCELLENT  score >= 750
-  GOOD       score >= 650
-  FAIR       score >= 550
-  POOR       score >= 450
-  BAD        score < 450
+**Логика операций:**
+
+`OperationService` разделён на два этапа:
+
+1. **Request** (синхронный HTTP handler → возвращает 202):
+   - Проверяет существование и активность счёта
+   - Для withdraw/transfer — проверяет достаточность баланса
+   - Для cross-currency — получает курс от ExchangeRateService
+   - Создаёт `OperationEvent` и кладёт в outbox через `KafkaOperationProducer`
+
+2. **Process** (асинхронный Kafka consumer):
+   - Проверяет идемпотентность по `idempotency_key`
+   - DEPOSIT: `balance += amount`
+   - WITHDRAWAL: `balance -= amount`
+   - TRANSFER: блокирует оба счёта `SELECT FOR UPDATE` в порядке возрастания ID (deadlock prevention), конвертирует сумму при разных валютах, создаёт пару операций (TRANSFER_OUT + TRANSFER_IN)
+   - Отправляет WebSocket-уведомление + Kafka-нотификацию (через outbox)
+
+---
+
+### 4.3 user-service (:8082)
+
+**Назначение**: хранение профилей пользователей и управление ролями.
+
+**Эндпоинты:**
+```
+POST   /api/v1/users                — создать пользователя
+GET    /api/v1/users                — все пользователи
+GET    /api/v1/users/{id}           — пользователь по ID
+GET    /api/v1/users/by-email       — поиск по email (используется BFF для resolve userId)
+PUT    /api/v1/users/{id}           — обновить данные
+PATCH  /api/v1/users/{id}/roles     — заменить набор ролей
+PATCH  /api/v1/users/{id}/block     — заблокировать
+PATCH  /api/v1/users/{id}/unblock   — разблокировать
+GET    /api/v1/users/roles          — список доступных ролей
 ```
 
-**PaymentScheduler — ежедневный планировщик:**
-
-```
-Cron: 0 0 0 * * *  (каждую ночь в 00:00)
-
-Алгоритм:
-1. Найти все PENDING payments с dueDate < now()
-2. Для каждого:
-   a. POST /api/v1/accounts/{accountId}/withdraw → core-service
-   b. Успех → payment.status = PAID, credit.remaining -= amount
-   c. Ошибка (InsufficientFunds) → payment.status = OVERDUE,
-                                    credit.status = OVERDUE
-3. Если credit.remaining <= 0 → credit.status = CLOSED
+**Модели данных:**
+```sql
+users: id, email, first_name, last_name, phone, blocked (DEFAULT FALSE), created_at, updated_at
+user_roles: user_id (FK), role (CLIENT/EMPLOYEE/ADMIN) — PK (user_id, role)
 ```
 
 ---
 
-### 4.5 client-bff (порт 8084)
+### 4.4 credit-service (:8083)
 
-BFF для iOS-приложения. Это **не тонкий прокси** — у него есть собственная бизнес-логика: проверка прав доступа и хранение UI-настроек.
+**Назначение**: выдача кредитов, управление тарифами, расписание платежей, кредитный рейтинг.
 
-**Ключевые компоненты:**
-
+**Эндпоинты:**
 ```
-UserResolverService      — извлекает userId из JWT (по email → user-service)
-ResourceOwnershipService — проверяет, что ресурс принадлежит текущему пользователю
-SettingsService          — хранит тему и скрытые счета в локальной БД
-```
+POST   /api/v1/credits                — создать кредит
+GET    /api/v1/credits/{id}           — кредит по ID (включает начисленные проценты)
+GET    /api/v1/credits?userId=X       — кредиты пользователя
+GET    /api/v1/credits/{id}/payments  — расписание платежей
+POST   /api/v1/credits/{id}/repay     — погашение кредита
 
-**Как работает проверка владения:**
+GET    /api/v1/tariffs                — активные тарифы
+POST   /api/v1/tariffs                — создать тариф
 
-```
-GET /api/v1/accounts/{id}  [Authorization: Bearer {jwt}]
-      │
-      ▼
-1. Извлечь email из JWT.subject
-2. GET /api/v1/users/by-email?email={email} → user-service → userId
-3. GET /api/v1/accounts/{id} → core-service → account.userId
-4. Если account.userId != userId → 403 ResourceAccessDeniedException
-5. Иначе → вернуть AccountResponse клиенту
+GET    /api/v1/credit-rating?userId=X — кредитный рейтинг пользователя
 ```
 
-**Эндпоинты (зеркало core/credit с ownership check):**
+**Модели данных:**
+```sql
+tariffs:
+  id, name, currency, interest_rate (DECIMAL 5,2 — годовая %),
+  min_amount, max_amount (DECIMAL 19,2), min_term_days, max_term_days, active, created_at
 
-```
-GET    /api/v1/accounts            — фильтрует по userId текущего пользователя
-GET    /api/v1/accounts/{id}       — ownership check
-POST   /api/v1/accounts            — инжектирует userId из JWT в body
-DELETE /api/v1/accounts/{id}       — ownership check
-POST   /api/v1/accounts/{id}/deposit    — ownership check
-POST   /api/v1/accounts/{id}/withdraw   — ownership check
-GET    /api/v1/accounts/{id}/operations — ownership check
-POST   /api/v1/transfers           — ownership check fromAccountId
-GET    /api/v1/credits             — фильтрует по userId
-GET    /api/v1/credits/{id}        — ownership check
-POST   /api/v1/credits             — ownership check accountId
-GET    /api/v1/credits/{id}/payments    — ownership check
-POST   /api/v1/credits/{id}/repay       — ownership check
+credits:
+  id, user_id, account_id, tariff_id, principal (DECIMAL 19,2),
+  remaining (DECIMAL 19,2), interest_rate (DECIMAL 5,2), term_days,
+  daily_payment (DECIMAL 19,2), status (ACTIVE/OVERDUE/CLOSED),
+  created_at, closed_at, last_accrual_at
 
-GET    /api/v1/settings            — настройки UI
-PUT    /api/v1/settings            — обновить настройки
-
-ANY    /api/v1/proxy/{service}/**  — произвольный прокси
-       (блокирует /accounts, /transfers, /credits — используй прямые endpoint'ы)
+payments:
+  id, credit_id, amount, status (PENDING/PAID/OVERDUE), due_date, paid_at
 ```
 
-**Настройки пользователя** хранятся в локальной PostgreSQL БД (не в Redis, несмотря на наличие Redis). Содержат:
-- `theme`: `LIGHT` | `DARK`
-- `hiddenAccounts`: список ID счетов, скрытых в интерфейсе
+**Логика создания кредита:**
+1. Проверяет тариф активен
+2. Проверяет валюта счёта = валюта тарифа
+3. Сумма в диапазоне `[min_amount, max_amount]`, срок в `[min_term_days, max_term_days]`
+4. Вычисляет аннуитетный платёж: `daily_payment = P * r / (1 - (1+r)^(-n))`, где `r = annual_rate / 100 / 365`
+5. Генерирует расписание платежей (1 платёж в день, последний = остаток + проценты)
+6. `POST /api/v1/master-account/transfer` → перечисляет сумму кредита на счёт клиента
+7. Устанавливает `last_accrual_at = now()`
+
+**Начисление процентов (при просмотре/погашении):**
+```
+minutes_elapsed = now() - last_accrual_at (в минутах)
+accrued_interest = remaining * ((1 + minute_rate)^minutes_elapsed - 1)
+```
+
+**PaymentScheduler (ежедневно в 00:00):**
+```
+Для каждого PENDING платежа с due_date <= now():
+  ├── CoreServiceClient.withdrawFromAccount(credit.accountId, payment.amount)
+  ├── При успехе: payment.status = PAID, credit.remaining -= principal_part
+  │   └── Если remaining <= 0: credit.status = CLOSED
+  └── При ошибке (InsufficientFunds): payment.status = OVERDUE, credit.status = OVERDUE
+```
+
+**Кредитный рейтинг:**
+```
+score = 850 - (overdue_payments_count * 50) + (closed_credits_count * 10)
+Диапазон: [300, 850]
+Грейды: EXCELLENT (≥750), GOOD (650-749), FAIR (550-649), POOR (450-549), BAD (<450)
+```
 
 ---
 
-### 4.6 employee-bff (порт 8085)
+### 4.5 client-bff (:8084)
 
-По структуре идентичен `client-bff`. Разница в OAuth2-клиенте и scopes (`admin` вместо `accounts.*`, `credits.*`).
+**Назначение**: BFF для iOS-клиента. Авторизует запросы, проверяет владение ресурсами, хранит UI-настройки, релеит WebSocket-уведомления.
+
+**Эндпоинты (проксирование + логика):**
+```
+GET    /api/v1/accounts                   — мои счета (userId из JWT)
+GET    /api/v1/accounts/{id}              — мой счёт (+ проверка владения)
+POST   /api/v1/accounts                   — создать счёт (userId из JWT)
+DELETE /api/v1/accounts/{id}              — закрыть свой счёт
+POST   /api/v1/accounts/{id}/deposit      — пополнить свой счёт
+POST   /api/v1/accounts/{id}/withdraw     — снять со своего счёта
+GET    /api/v1/accounts/{id}/operations   — история операций
+
+GET    /api/v1/credits                    — мои кредиты
+GET    /api/v1/credits/{id}               — мой кредит (+ проверка владения)
+POST   /api/v1/credits                    — создать кредит
+GET    /api/v1/credits/{id}/payments      — платежи по кредиту
+POST   /api/v1/credits/{id}/repay         — погасить кредит
+GET    /api/v1/credit-rating              — мой кредитный рейтинг
+
+POST   /api/v1/transfers                  — перевод между счетами
+
+GET    /api/v1/settings                   — мои UI-настройки
+PUT    /api/v1/settings                   — обновить настройки
+
+GET    /api/v1/proxy/{service}/**         — прозрачное проксирование
+```
+
+**UserResolverService**: при каждом запросе извлекает `email` из JWT (`sub` claim), делает `GET /api/v1/users/by-email?email=...` в user-service и получает `userId`. Этот userId используется для всех последующих операций.
+
+**ResourceOwnershipService**: перед выполнением операции над счётом/кредитом проверяет, что ресурс принадлежит текущему пользователю.
+
+**SettingsService**: хранит в локальной БД `user_settings` (тема LIGHT/DARK, массив скрытых счетов `hidden_account_ids`).
+
+**UI-настройки (user_settings):**
+```sql
+user_settings: id, user_id, theme (LIGHT/DARK), hidden_account_ids (TEXT JSON), created_at, updated_at
+```
+
+---
+
+### 4.6 employee-bff (:8085)
+
+**Назначение**: BFF для приложения сотрудника. Отличия от client-bff:
+- Требует роль `EMPLOYEE` вместо `CLIENT`
+- Имеет `RoleManagementController` для управления ролями пользователей
+
+**Дополнительный функционал:**
+```
+PATCH /api/v1/users/{id}/roles   — изменить роли пользователя
+```
+
+**RoleManagementService** после успешного обновления ролей в user-service:
+```
+Redis.set("roles:invalidated:{email}", System.currentTimeMillis())
+```
+Это инвалидирует все текущие токены пользователя через `TokenInvalidationFilter`.
 
 ---
 
 ## 5. Межсервисное взаимодействие
 
-### 5.1 Карта вызовов
+### Кто кого вызывает
 
 ```
-auth-service    ──REST──►  user-service    (регистрация, загрузка ролей)
-credit-service  ──REST──►  core-service    (зачисление кредита, списание платежа)
-client-bff      ──REST──►  core-service    (счета, операции, переводы)
-client-bff      ──REST──►  user-service    (резолюция userId по email)
-client-bff      ──REST──►  credit-service  (кредиты, погашение)
-employee-bff    ──REST──►  core-service    (те же + все счета)
-employee-bff    ──REST──►  user-service    (управление пользователями)
-employee-bff    ──REST──►  credit-service  (тарифы, кредиты)
-core-service    ──Kafka──► core-service    (сам себе, через bank.operations)
-core-service    ──Kafka──► client-bff      (уведомления через bank.operation-notifications)
-core-service    ──Kafka──► employee-bff    (то же)
+auth-service  ──POST /api/v1/users──────────────────────► user-service
+
+client-bff    ──GET /api/v1/users/by-email──────────────► user-service
+client-bff    ──GET/POST/DELETE /api/v1/accounts/**─────► core-service
+client-bff    ──POST /api/v1/transfers──────────────────► core-service
+client-bff    ──GET/POST /api/v1/credits/**─────────────► credit-service
+client-bff    ──GET /api/v1/tariffs────────────────────► credit-service
+client-bff    ──GET /api/v1/credit-rating──────────────► credit-service
+
+employee-bff  ──(аналогично client-bff)──────────────────► все сервисы
+employee-bff  ──PATCH /api/v1/users/{id}/roles───────────► user-service
+
+credit-service ──GET /api/v1/accounts/{id}───────────────► core-service
+credit-service ──POST /api/v1/master-account/transfer────► core-service
+credit-service ──POST /api/v1/accounts/{id}/withdraw─────► core-service
 ```
 
-### 5.2 Технология вызовов
+### Паттерн HTTP клиентов
 
-Все синхронные вызовы выполняются через **Spring RestClient** — блокирующий HTTP-клиент (Java 21 virtual threads потенциально помогают здесь). Никакого Feign.
-
-Базовые URL настраиваются через `application.yml`:
+Все межсервисные вызовы используют Spring `RestClient` с захардкоженными base URL из application.yml:
 
 ```yaml
-# credit-service
 services:
-  core-service:
-    url: http://localhost:8080
-
-# client-bff
-services:
-  core-service:
-    url: http://localhost:8080
-  user-service:
-    url: http://localhost:8082
-  credit-service:
-    url: http://localhost:8083
+  core-service.url: http://localhost:8080
+  user-service.url: http://localhost:8082
+  credit-service.url: http://localhost:8083
 ```
 
-### 5.3 Критические межсервисные вызовы
-
-**1. auth-service → user-service (при аутентификации)**
-
-Каждый раз, когда кто-то логинится, auth-service запрашивает user-service за ролями. Если user-service недоступен — аутентификация падает.
-
-**2. credit-service → core-service (выдача кредита)**
-
-```
-Шаг 1: GET /api/v1/accounts/{accountId}     — проверить валюту счёта
-Шаг 2: GET /api/v1/master-account?currency= — найти мастер-счёт нужной валюты
-Шаг 3: POST /api/v1/master-account/transfer — перевести с мастер-счёта на счёт клиента
-        { targetAccountId, amount, sourceCurrency }
-```
-
-Это синхронный вызов внутри транзакции создания кредита. Если core-service недоступен — кредит не создаётся, транзакция откатывается.
-
-**3. client-bff → user-service (каждый запрос)**
-
-На каждый API-вызов BFF резолвит `userId` через `GET /api/v1/users/by-email?email={email}`. Это дополнительный HTTP-запрос на каждый запрос клиента. Кеширования нет — потенциальная точка оптимизации.
+Синхронные вызовы: ошибки бросают исключения, которые обрабатываются через `@RestControllerAdvice`.
 
 ---
 
 ## 6. Kafka и асинхронность
 
-### 6.1 Зачем Kafka для операций
+### Топики
 
-Операции по счетам (deposit, withdraw, transfer) **не выполняются синхронно** в HTTP-запросе. Вместо этого:
+| Топик | Продюсер | Консьюмеры | Назначение |
+|-------|----------|-----------|-----------|
+| `bank.operations` | core-service | core-service (`core-service`) | Команды на выполнение операций |
+| `bank.operation-notifications` | core-service | client-bff (`client-bff`), employee-bff (`employee-bff`) | Уведомления о завершённых операциях |
 
-1. HTTP-запрос возвращает `202 Accepted` немедленно
-2. Событие сохраняется в outbox-таблицу
-3. Kafka-консьюмер обрабатывает событие асинхронно
-
-Преимущества:
-- Клиент не ждёт завершения обработки
-- Повторные попытки при сбоях без потери события
-- Идемпотентность через UUID-ключ
-
-### 6.2 Топики
+### Жизненный цикл операции
 
 ```
-bank.operations                — команды: запросы на выполнение операций
-  Partitions: 3
-  Key:        accountId (строка)  ← обеспечивает ordering по счёту
-  Value:      OperationEvent (JSON)
-
-bank.operation-notifications   — события: уведомления об успешных операциях
-  Partitions: 3
-  Key:        accountId (строка)
-  Value:      OperationResponse (JSON)
+HTTP POST /deposit
+    │
+    ▼
+OperationService.requestDeposit()
+    │  проверки + создаёт OperationEvent
+    ▼
+KafkaOperationProducer.sendOperation()
+    │  НЕ отправляет в Kafka напрямую!
+    ▼
+outbox_events INSERT (status=PENDING, topic='bank.operations')
+    │
+    │  (через ~500мс)
+    ▼
+OutboxEventPublisher (@Scheduled fixedDelay=500ms)
+    │  читает до 100 PENDING событий
+    ▼
+KafkaTemplate.send(topic, key, payload)
+    │  при успехе: status=SENT
+    │  при ошибке: retry_count++, при >=10 → status=FAILED
+    ▼
+KafkaOperationConsumer (groupId: core-service)
+    │  десериализует OperationEvent
+    ▼
+OperationService.processOperation()
+    │  выполняет изменение баланса в БД
+    │  проверяет idempotency_key (UNIQUE constraint)
+    ▼
+OperationNotificationService.notifyNewOperation()
+    │
+    ├──► WebSocket: /topic/accounts/{id}/operations (прямая отправка через STOMP)
+    │
+    └──► outbox_events INSERT (status=PENDING, topic='bank.operation-notifications')
+              │  (через ~500мс)
+              ▼
+         OutboxEventPublisher → KafkaTemplate.send('bank.operation-notifications', ...)
+              │
+              ▼
+         OperationNotificationConsumer (client-bff, groupId: client-bff)
+         OperationNotificationConsumer (employee-bff, groupId: employee-bff)
+              │
+              ▼
+         WebSocket relay: /topic/accounts/{id}/operations
 ```
 
-Ключ партиционирования по `accountId` гарантирует, что все операции по одному счёту обрабатываются одним консьюмером в порядке очереди.
-
-### 6.3 OperationEvent
-
-```json
-{
-  "idempotencyKey": "550e8400-e29b-41d4-a716-446655440000",
-  "accountId": 1,
-  "type": "DEPOSIT",
-  "amount": 1000.00,
-  "currency": "RUB",
-  "relatedAccountId": null,
-  "exchangeRate": null,
-  "description": "Пополнение счёта"
-}
-```
-
-### 6.4 Консьюмеры и retry-политики
+### Обработка ошибок в консьюмерах
 
 **core-service (bank.operations):**
-```
-Group:    core-service
-BackOff:  FixedBackOff(5000ms, 3 retries)
-Logic:
-  - InsufficientFundsException   → log.warn, не повторять (бизнес-ошибка)
-  - AccountNotFoundException      → log.warn, не повторять
-  - AccountClosedException        → log.warn, не повторять
-  - ExchangeRateUnavailableException → rethrow → DefaultErrorHandler повторит
-```
 
-**client-bff (bank.operation-notifications):**
-```
-Group:    client-bff
-BackOff:  FixedBackOff(2000ms, 3 retries)
-Logic:
-  - JsonProcessingException → log.error, skip (невалидный JSON — не повторять)
-  - WebSocket ошибка       → пробрасывается → DefaultErrorHandler повторит
-```
+| Исключение | Поведение |
+|-----------|----------|
+| `InsufficientFundsException` | Log WARN, сообщение пропускается (бизнес-ошибка, retry не поможет) |
+| `AccountNotFoundException` | Log WARN, пропускается |
+| `AccountClosedException` | Log WARN, пропускается |
+| `ExchangeRateUnavailableException` | Бросается наружу → `DefaultErrorHandler`: 3 retry с задержкой 5 с |
 
-**employee-bff (bank.operation-notifications):**
-```
-Group:    employee-bff
-BackOff:  FixedBackOff(2000ms, 3 retries)
-Logic:    идентично client-bff
-```
+**client-bff, employee-bff (bank.operation-notifications):**
 
-### 6.5 Сериализация
-
-**Продюсер (core-service):**
-- `JsonSerializer` со Spring `ObjectMapper` (с `JavaTimeModule`)
-- Ключ: `StringSerializer`
-- Отправляет `OperationEvent` или `OperationResponse` как JSON
-
-**Консьюмер core-service:**
-- `JsonDeserializer<OperationEvent>` — target type из аргумента `@KafkaListener`
-- Trusted packages: `com.bank.core.dto.kafka`
-
-**Консьюмер BFF:**
-- `StringDeserializer` — получает сырую JSON-строку
-- Парсинг вручную через `ObjectMapper.readTree()`
+| Ситуация | Поведение |
+|---------|----------|
+| Ошибка парсинга JSON | Log ERROR, пропускается (повторка не поможет) |
+| Ошибка отправки WebSocket | Бросается наружу → `DefaultErrorHandler`: 3 retry с задержкой 2 с |
 
 ---
 
 ## 7. Transactional Outbox
 
-### 7.1 Проблема без outbox
+**Проблема**: если сервис упадёт после успешного commit в БД, но до отправки в Kafka — событие потеряется.
 
-```
-HTTP Request → OperationService.requestDeposit()
-                    │
-                    ├── kafkaTemplate.send()   ← Kafka может быть недоступна
-                    │     └── Exception → событие потеряно навсегда
-                    │
-                    └── return 202 Accepted    ← клиент думает, что всё ок
-```
+**Решение**: Transactional Outbox Pattern.
 
-### 7.2 Решение: outbox-паттерн
-
-```
-HTTP Request → OperationService.requestDeposit()
-                    │
-                    ├── OutboxEventService.save()  ← сохранить в БД (транзакционно)
-                    │     └── INSERT INTO outbox_events (PENDING)
-                    │
-                    └── return 202 Accepted
-
-                    ↕ каждые 500ms
-
-OutboxEventPublisher.publishPendingEvents()
-  SELECT * FROM outbox_events WHERE status='PENDING' ORDER BY created_at LIMIT 100
-  FOR EACH event:
-    kafkaTemplate.send(topic, key, payload).get(5 seconds)
-    → success: UPDATE status='SENT', sent_at=now()
-    → failure: retryCount++
-               if retryCount >= 10: UPDATE status='FAILED'
-```
-
-### 7.3 Атомарность
-
-Ключевой момент: событие **сохраняется в той же транзакции**, что и проверки перед операцией:
-
-```
-requestDeposit():
-  1. findActiveAccount()    ← читает из БД
-  2. создаём OperationEvent
-  3. outboxEventService.save()  ← INSERT в outbox_events
-  ─── если что-то выше упало → транзакция откатывается → событие не появится в outbox
-
-processOperation() → @Transactional:
-  1. проверка идемпотентности
-  2. обновление баланса
-  3. сохранение Operation
-  4. notificationService.notifyNewOperation()
-       └── outboxEventService.save()  ← тоже внутри той же транзакции
-  ─── если операция в БД commit'нулась → уведомление гарантированно попадёт в outbox
-```
-
-### 7.4 Схема таблицы
+### Схема таблицы outbox_events
 
 ```sql
 CREATE TABLE outbox_events (
-    id          BIGSERIAL    PRIMARY KEY,
-    topic       VARCHAR(255) NOT NULL,        -- 'bank.operations' или 'bank.operation-notifications'
-    event_key   VARCHAR(255),                 -- accountId (ключ партиции Kafka)
-    payload     TEXT         NOT NULL,        -- JSON события
-    status      VARCHAR(20)  NOT NULL DEFAULT 'PENDING',   -- PENDING|SENT|FAILED
-    retry_count INT          NOT NULL DEFAULT 0,
-    created_at  TIMESTAMP    NOT NULL DEFAULT now(),
-    sent_at     TIMESTAMP                     -- NULL до успешной отправки
+    id         BIGSERIAL PRIMARY KEY,
+    topic      VARCHAR(255) NOT NULL,        -- 'bank.operations' или 'bank.operation-notifications'
+    event_key  VARCHAR(255),                 -- Kafka ключ (accountId) для партиционирования
+    payload    TEXT NOT NULL,                -- JSON сериализованное событие
+    status     VARCHAR(20) NOT NULL          -- 'PENDING', 'SENT', 'FAILED'
+               DEFAULT 'PENDING',
+    retry_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    sent_at    TIMESTAMP
 );
--- Частичный индекс только по PENDING — быстрый поиск для планировщика
-CREATE INDEX idx_outbox_status_created ON outbox_events (status, created_at)
-    WHERE status = 'PENDING';
+
+CREATE INDEX ON outbox_events (status, created_at) WHERE status = 'PENDING';
 ```
 
-### 7.5 Десериализация при публикации
-
-Планировщик знает, какой класс использовать по имени топика:
+### OutboxEventPublisher (Scheduler)
 
 ```java
-private Object deserialize(OutboxEvent event) {
-    return switch (event.getTopic()) {
-        case "bank.operations" ->
-            objectMapper.readValue(event.getPayload(), OperationEvent.class);
-        case "bank.operation-notifications" ->
-            objectMapper.readValue(event.getPayload(), OperationResponse.class);
-        default -> throw new IllegalArgumentException("Неизвестный топик");
-    };
+@Scheduled(fixedDelay = 500)  // каждые 500мс
+void publishPendingEvents() {
+    List<OutboxEvent> events = outboxRepo.findTop100ByStatusOrderByCreatedAt(PENDING);
+    for (OutboxEvent event : events) {
+        try {
+            kafkaTemplate.send(event.getTopic(), event.getEventKey(), event.getPayload())
+                         .get(5, TimeUnit.SECONDS);  // sync wait
+            event.setStatus(SENT);
+            event.setSentAt(now());
+        } catch (Exception e) {
+            event.setRetryCount(event.getRetryCount() + 1);
+            if (event.getRetryCount() >= 10) {
+                event.setStatus(FAILED);
+            }
+        }
+        outboxRepo.save(event);
+    }
 }
 ```
 
-Затем объект передаётся в `kafkaTemplate.send()`, который сериализует его через `JsonSerializer` — сохраняя все заголовки типов.
+### Гарантии
+
+- **Атомарность**: запись в outbox_events — часть той же транзакции, что и бизнес-данные. Либо оба commit, либо ни одного.
+- **At-least-once**: scheduler читает PENDING события до тех пор, пока они не станут SENT.
+- **Идемпотентность на стороне консьюмера**: `idempotency_key` (UUID UNIQUE) защищает от дублирования операций при повторной доставке.
+- **Dead-letter**: события с `retry_count >= 10` переходят в статус FAILED и требуют ручного разбора.
+- **Производительность**: индекс `WHERE status='PENDING'` на `(status, created_at)` позволяет эффективно выбирать только необработанные события.
 
 ---
 
 ## 8. WebSocket и real-time уведомления
 
-### 8.1 Конфигурация STOMP
+### Конфигурация STOMP (core-service и оба BFF)
 
-Все три сервиса (core-service, client-bff, employee-bff) имеют WebSocket:
+```java
+configureMessageBroker:
+  enableSimpleBroker("/topic")          // in-memory брокер
+  setApplicationDestinationPrefixes("/app")
 
-```
-Endpoint:         /ws/operations  (SockJS fallback)
-Message broker:   /topic          (pub/sub, broadcast)
-App prefix:       /app            (отправка серверу)
-CORS:             allowedOriginPatterns = "*"
-```
-
-Подписка клиента: `/topic/accounts/{accountId}/operations`
-
-### 8.2 Двойная рассылка уведомлений
-
-После обработки операции в Kafka-консьюмере core-service:
-
-```
-OperationNotificationService.notifyNewOperation(operation):
-
-  1. WebSocket (прямое подключение к core-service):
-     messagingTemplate.convertAndSend(
-         "/topic/accounts/{accountId}/operations", operation)
-
-  2. Outbox → Kafka (для BFF-сервисов):
-     outboxEventService.save("bank.operation-notifications", accountId, operation)
-          ↓
-     OutboxEventPublisher отправляет в Kafka
-          ↓
-     client-bff KafkaConsumer получает
-          ↓
-     messagingTemplate.convertAndSend(
-         "/topic/accounts/{accountId}/operations", operation)
+registerStompEndpoints:
+  "/ws/operations"                      // точка подключения
+  allowedOriginPatterns("*")            // CORS
 ```
 
-iOS-приложение подключается к `ws://localhost:8084/ws/operations` (client-bff). Получает уведомление через вторую ветку (через Kafka).
+### Топология уведомлений
 
-### 8.3 Формат уведомления (OperationResponse)
-
-```json
-{
-  "id": 42,
-  "accountId": 1,
-  "type": "DEPOSIT",
-  "amount": 1000.00,
-  "currency": "RUB",
-  "relatedAccountId": null,
-  "exchangeRate": null,
-  "description": "Пополнение счёта",
-  "createdAt": "2024-01-15T12:30:00"
-}
 ```
+core-service                    client-bff
+     │                               │
+     │ OperationNotificationService  │
+     │                               │
+     ├──► STOMP /topic/accounts/{id}/operations  ──► клиент (прямое соединение с core)
+     │     (прямая отправка через SimpMessagingTemplate)
+     │
+     └──► outbox_events (bank.operation-notifications)
+               │
+               ▼
+          Kafka → OperationNotificationConsumer (client-bff)
+               │
+               ▼
+          STOMP /topic/accounts/{id}/operations  ──► клиент (через BFF)
+```
+
+Уведомление приходит **двумя путями** — напрямую от core-service (если клиент подключён туда) и через BFF (основной path для iOS).
+
+iOS-клиент подключается по WebSocket к `client-bff:8084/ws/operations` и подписывается на `/topic/accounts/{accountId}/operations`.
 
 ---
 
 ## 9. Базы данных
 
-### 9.1 auth-service (bank_auth)
+### auth-service
 
-```sql
--- V1
-auth_users(
-    id           BIGSERIAL PRIMARY KEY,
-    email        VARCHAR UNIQUE NOT NULL,
-    password_hash VARCHAR NOT NULL,        -- bcrypt
-    enabled      BOOLEAN DEFAULT TRUE
-)
-
--- V2: INSERT default employee (admin@bank.com)
-
--- V3: OAuth2 хранилище авторизаций Spring Authorization Server
-oauth2_authorization(...)             -- активные авторизации, токены
-oauth2_authorization_consent(...)     -- согласия пользователей на scopes
+```
+V1 — auth_users (id, email, password_hash, enabled, created_at)
+V2 — INSERT default employee user
+V3 — OAuth2 системные таблицы (oauth2_authorization, oauth2_authorization_consent, oauth2_registered_client)
 ```
 
-### 9.2 core-service (bank_core)
+### core-service
 
-```sql
--- V1
-accounts(
-    id           BIGSERIAL PRIMARY KEY,
-    user_id      BIGINT NOT NULL,
-    currency     VARCHAR(3) CHECK (currency IN ('RUB', 'USD', 'EUR')),
-    balance      NUMERIC(19,4) DEFAULT 0 CHECK (balance >= 0),
-    account_type VARCHAR(10) CHECK (account_type IN ('PERSONAL', 'MASTER')),
-    is_closed    BOOLEAN DEFAULT FALSE,
-    created_at   TIMESTAMP DEFAULT now(),
-    updated_at   TIMESTAMP DEFAULT now(),
-    version      BIGINT DEFAULT 0          -- оптимистичная блокировка
-)
--- Уникальный индекс: uq_master_account_per_currency (account_type='MASTER', currency)
--- Гарантирует: один мастер-счёт на валюту
-
--- V2
-operations(
-    id               BIGSERIAL PRIMARY KEY,
-    idempotency_key  UUID UNIQUE NOT NULL,  -- защита от дублирования
-    account_id       BIGINT REFERENCES accounts(id),
-    type             VARCHAR(20) CHECK (type IN ('DEPOSIT','WITHDRAWAL','TRANSFER_IN','TRANSFER_OUT')),
-    amount           NUMERIC(19,4) CHECK (amount > 0),
-    currency         VARCHAR(3),
-    related_account_id BIGINT REFERENCES accounts(id),
-    exchange_rate    NUMERIC(12,6),
-    description      VARCHAR(500),
-    created_at       TIMESTAMP DEFAULT now()
-)
--- Индексы: account_id, created_at, (account_id, created_at DESC)
-
--- V3: INSERT мастер-счета RUB, USD, EUR
-
--- V4
-outbox_events(...)  -- см. раздел 7
+```
+V1 — accounts (id, user_id, currency, balance, account_type, is_closed, version, created_at, updated_at)
+V2 — operations (id, idempotency_key, account_id, type, amount, currency, related_account_id, exchange_rate, description, created_at)
+V3 — INSERT master accounts (RUB, USD, EUR с начальным balance=1,000,000,000)
+V4 — outbox_events (id, topic, event_key, payload, status, retry_count, created_at, sent_at)
 ```
 
-### 9.3 user-service (bank_user)
+### user-service
 
-```sql
--- V1
-users(
-    id          BIGSERIAL PRIMARY KEY,
-    email       VARCHAR UNIQUE NOT NULL,
-    first_name  VARCHAR NOT NULL,
-    last_name   VARCHAR NOT NULL,
-    phone       VARCHAR,
-    blocked     BOOLEAN DEFAULT FALSE,
-    created_at  TIMESTAMP DEFAULT now(),
-    updated_at  TIMESTAMP DEFAULT now()
-)
-
-user_roles(
-    user_id BIGINT REFERENCES users(id),
-    role    VARCHAR NOT NULL,   -- CLIENT, ADMIN, EMPLOYEE, MANAGER
-    PRIMARY KEY (user_id, role)
-)
-
--- V2: INSERT default employee (admin@bank.com, роль EMPLOYEE)
+```
+V1 — users (id, email, first_name, last_name, phone, blocked, created_at, updated_at)
+   — user_roles (user_id, role) — PK (user_id, role), ON DELETE CASCADE
+V2 — INSERT default employee user
 ```
 
-### 9.4 credit-service (bank_credit)
+### credit-service
 
-```sql
--- V1
-tariffs(
-    id           BIGSERIAL PRIMARY KEY,
-    name         VARCHAR NOT NULL,
-    interest_rate DECIMAL(5,2) NOT NULL,   -- процент годовых
-    min_amount   DECIMAL DEFAULT 1000,
-    max_amount   DECIMAL DEFAULT 10000000,
-    min_term_days INT DEFAULT 30,
-    max_term_days INT DEFAULT 3650,
-    active       BOOLEAN DEFAULT TRUE,
-    created_at   TIMESTAMP DEFAULT now()
-)
--- V6: добавлена колонка currency (RUB/USD/EUR)
-
--- V2
-credits(
-    id           BIGSERIAL PRIMARY KEY,
-    user_id      BIGINT NOT NULL,
-    account_id   BIGINT NOT NULL,
-    tariff_id    BIGINT REFERENCES tariffs(id),
-    principal    NUMERIC(19,4),       -- исходная сумма
-    remaining    NUMERIC(19,4),       -- остаток долга
-    interest_rate NUMERIC(5,2),       -- скопировано с тарифа в момент создания
-    term_days    INT,
-    daily_payment NUMERIC(19,4),      -- аннуитетный платёж
-    status       VARCHAR(10) CHECK (status IN ('ACTIVE','CLOSED','OVERDUE')),
-    created_at   TIMESTAMP DEFAULT now(),
-    closed_at    TIMESTAMP,
-    last_accrual_at TIMESTAMP DEFAULT now()   -- добавлено V4
-)
-
--- V3
-payments(
-    id        BIGSERIAL PRIMARY KEY,
-    credit_id BIGINT REFERENCES credits(id),
-    amount    NUMERIC(19,4) NOT NULL,
-    status    VARCHAR(10) CHECK (status IN ('PENDING','PAID','OVERDUE')),
-    due_date  TIMESTAMP NOT NULL,
-    paid_at   TIMESTAMP,
-    created_at TIMESTAMP DEFAULT now()
-)
--- Индексы: credit_id, status, due_date
+```
+V1 — tariffs (id, name, interest_rate, min/max amount, min/max term_days, active, created_at)
+V2 — credits (id, user_id, account_id, tariff_id, principal, remaining, interest_rate, term_days, daily_payment, status, created_at, closed_at)
+V3 — payments (id, credit_id, amount, status, due_date, paid_at)
+V4 — ADD COLUMN last_accrual_at в credits (для расчёта начисленных процентов)
+V5 — Изменить тип interest_rate на DECIMAL(5,2)
+V6 — ADD COLUMN currency в tariffs
 ```
 
-### 9.5 client-bff / employee-bff
+### client-bff / employee-bff
 
-```sql
--- V1 (обе БД идентичны)
-user_settings(
-    user_id         BIGINT PRIMARY KEY,
-    theme           VARCHAR(10) DEFAULT 'LIGHT',  -- LIGHT, DARK
-    hidden_accounts TEXT DEFAULT ''               -- comma-separated account IDs
-)
+```
+V1 — user_settings (id, user_id, theme, hidden_account_ids, created_at, updated_at)
 ```
 
 ---
 
 ## 10. Бизнес-процессы
 
-### 10.1 Регистрация и первый вход
+### Регистрация и первый вход
 
 ```
-1. Client → POST /api/v1/auth/register
-   { email, password, firstName, lastName, phone }
-
-2. auth-service:
-   a. Проверить email в auth_users → 409 если занят
-   b. bcrypt(password) → сохранить AuthUser
-   c. POST /api/v1/users → user-service
-      { email, firstName, lastName, phone, roles: ["CLIENT"] }
-   d. user-service создаёт User + user_roles
-
-3. Первый OAuth2 Login:
-   a. Client открывает: GET http://localhost:8081/oauth2/authorize
-      ?client_id=client-bff&response_type=code&scope=openid profile accounts.read...
-      &redirect_uri=bankapp://callback&code_challenge=xxx&code_challenge_method=S256
-   b. auth-service → redirect на /login (HTML-форма)
-   c. Пользователь вводит email + password
-   d. CustomUserDetailsService: GET /api/v1/users/by-email → user-service
-      → проверить blocked=false → получить роли
-   e. BCrypt verify password
-   f. auth-service → redirect на bankapp://callback?code=xxx
-   g. Client: POST /oauth2/token
-      { code, code_verifier, grant_type=authorization_code }
-   h. auth-service → { access_token (JWT, 1h), refresh_token (30d), id_token }
+1. Клиент отправляет POST /api/v1/auth/register {email, password, firstName, lastName, phone}
+2. auth-service создаёт AuthUser (пароль BCrypt хеш)
+3. auth-service вызывает POST /api/v1/users в user-service → создаётся User с ролью CLIENT
+4. Клиент инициирует OAuth2 flow (GET /oauth2/authorization/auth-service)
+5. Редирект на /login форму в auth-service
+6. Ввод email/password → auth-service генерирует authorization code
+7. Редирект на BFF с code
+8. BFF обменивает code на JWT (POST /oauth2/token)
+9. iOS сохраняет access_token + refresh_token
 ```
 
-### 10.2 Пополнение счёта
+### Пополнение счёта
 
 ```
-iOS App → POST /api/v1/accounts/{id}/deposit
-          Authorization: Bearer {jwt}
-          { "amount": 5000.00 }
-    │
-    ▼
-client-bff:
-  1. Verify JWT (проверить подпись, exp, issuer)
-  2. Резолвить userId: jwt.subject → GET /api/v1/users/by-email → userId
-  3. checkAccountOwnership: GET /api/v1/accounts/{id} → account.userId == userId?
-  4. POST /api/v1/accounts/{id}/deposit → core-service { "amount": 5000.00 }
-  5. → 202 Accepted (передаётся клиенту)
-    │
-    ▼
-core-service:
-  6. findActiveAccount(accountId)       — бросает если закрыт/не найден
-  7. Создать OperationEvent { UUID, accountId, DEPOSIT, 5000, RUB, ... }
-  8. OutboxEventService.save() → INSERT outbox_events (PENDING)
-  9. → 202 Accepted
-    │
-    ▼ (асинхронно, через ~500ms)
-
-OutboxEventPublisher:
-  10. SELECT PENDING events LIMIT 100
-  11. Deserialize → OperationEvent
-  12. kafkaTemplate.send("bank.operations", accountId, event).get(5s)
-  13. UPDATE outbox_events status='SENT'
-    │
-    ▼
-KafkaOperationConsumer (core-service):
-  14. Receive OperationEvent
-  15. OperationService.processOperation():
-      a. existsByIdempotencyKey → skip если дубликат
-      b. @Transactional:
-         - lockAccount(accountId) ← SELECT FOR UPDATE
-         - account.balance += 5000
-         - save(account)
-         - save(Operation { idempotencyKey, DEPOSIT, ... })
-         - notificationService.notifyNewOperation(operation)
-              ├── messagingTemplate.convertAndSend() ← WebSocket прямой
-              └── outboxEventService.save() ← уведомление в outbox
-    │
-    ▼ (асинхронно)
-
-OutboxEventPublisher:
-  16. SELECT PENDING notification events
-  17. kafkaTemplate.send("bank.operation-notifications", accountId, operationResponse)
-    │
-    ▼
-OperationNotificationConsumer (client-bff):
-  18. Receive OperationResponse
-  19. messagingTemplate.convertAndSend("/topic/accounts/{id}/operations", data)
-    │
-    ▼
-iOS App (WebSocket):
-  20. Получает push-уведомление об операции
-  21. UI обновляет баланс и историю операций
+1. POST /api/v1/accounts/{id}/deposit (Bearer JWT)
+2. client-bff проверяет JWT (hasRole CLIENT, не инвалидирован)
+3. client-bff проверяет владение счётом (ResourceOwnershipService)
+4. client-bff → POST /api/v1/accounts/{id}/deposit → core-service
+5. core-service: проверяет счёт, создаёт OperationEvent, пишет в outbox_events
+6. HTTP ответ: 202 ACCEPTED (операция принята, но ещё не выполнена)
+7. [через ~500мс] OutboxEventPublisher отправляет событие в Kafka
+8. KafkaOperationConsumer обрабатывает: balance += amount
+9. OperationNotificationService отправляет WebSocket уведомление + пишет нотификацию в outbox
+10. [через ~500мс] OutboxEventPublisher публикует нотификацию в bank.operation-notifications
+11. OperationNotificationConsumer (client-bff) получает → WebSocket relay
+12. iOS получает уведомление по WebSocket
 ```
 
-### 10.3 Перевод между счетами в разных валютах
+### Перевод между счетами в разных валютах
 
 ```
-iOS → POST /api/v1/transfers
-      { fromAccountId: 1 (USD), toAccountId: 2 (RUB), amount: 100 }
-
-client-bff:
-  1. checkAccountOwnership(fromAccountId=1)
-  2. POST /api/v1/transfers → core-service
-
-core-service OperationService.requestTransfer():
-  3. findActiveAccount(1)   → { USD, balance: 1000 }
-  4. findActiveAccount(2)   → { RUB, balance: 500 }
-  5. validateSufficientFunds: 1000 >= 100 ✓
-  6. Currencies differ → ExchangeRateService.getRate(USD, RUB)
-     a. @Cacheable("exchangeRates") → кеш на 60 минут
-     b. GET https://open.er-api.com/v6/latest/USD
-     c. rate = 1/0.011 ≈ 90.909 RUB за 1 USD
-  7. Создать OperationEvent {
-       type: TRANSFER_OUT, accountId: 1,
-       relatedAccountId: 2, amount: 100,
-       currency: USD, exchangeRate: 90.909
-     }
-  8. outboxEventService.save()
-
-KafkaOperationConsumer → processTransfer():
-  9. Блокировать счета (id 1 < id 2 → lock 1 first, then 2)
-  10. Validate sufficient funds: 1000 >= 100 ✓
-  11. convertedAmount = 100 * 90.909 = 9090.9 RUB
-  12. account1.balance = 1000 - 100 = 900 USD
-  13. account2.balance = 500 + 9090.9 = 9590.9 RUB
-  14. Сохранить Operation TRANSFER_OUT для account1
-  15. Сохранить Operation TRANSFER_IN для account2 (idempotencyKey = hash(original_key + "_IN"))
-  16. Уведомить оба счёта через Kafka/WebSocket
+1. POST /api/v1/transfers {fromAccountId, toAccountId, amount, currency}
+2. BFF проверки → core-service
+3. core-service: проверяет оба счёта, получает курс (ExchangeRateService)
+4. Создаёт OperationEvent (type=TRANSFER_OUT) с exchange_rate
+5. → outbox → Kafka → consumer
+6. consumer: SELECT FOR UPDATE обоих счетов (в порядке возрастания ID)
+7. Конвертирует: convertedAmount = amount * exchange_rate
+8. from: balance -= amount
+9. to:   balance += convertedAmount
+10. Создаёт 2 записи в operations (TRANSFER_OUT + TRANSFER_IN)
+11. Отправляет уведомления по обоим счетам
 ```
 
-### 10.4 Выдача кредита
+### Выдача кредита
 
 ```
-iOS → POST /api/v1/credits
-      { tariffId: 1, amount: 100000, termDays: 365 }
-      (userId и accountId инжектируются из JWT/ownership check в BFF)
+1. POST /api/v1/credits {accountId, tariffId, amount, termDays}
+2. BFF → credit-service
+3. Проверка: тариф активен, валюта совпадает, сумма и срок в диапазоне
+4. Расчёт аннуитетного платежа
+5. Создание расписания (N платежей)
+6. CoreServiceClient.transferFromMasterAccount(accountId, amount, currency)
+   → POST /api/v1/master-account/transfer → core-service
+   (синхронный вызов: мастер-счёт → счёт клиента, через Kafka)
+7. credit.status = ACTIVE, last_accrual_at = now()
+8. 202 ACCEPTED (деньги поступят после обработки Kafka)
+```
 
-client-bff:
-  1. Резолвить userId
-  2. checkAccountOwnership(accountId)
-  3. POST /api/v1/credits → credit-service
+### Погашение кредита
 
-credit-service CreditService.createCredit():
-  4. findTariff(tariffId) → { interestRate: 15%, minAmount: 10000, currency: RUB }
-  5. GET /api/v1/accounts/{accountId} → core-service → { currency: RUB } ✓
-  6. Validate amount: 10000 <= 100000 <= 10000000 ✓
-  7. Validate term: 30 <= 365 <= 3650 ✓
-  8. dailyRate    = 0.15 / (365 * 24 * 60) ≈ 2.85e-7
-  9. dailyPayment = 100000 * dailyRate / (1 - (1+dailyRate)^-365)
-  10. Сохранить Credit { principal:100000, remaining:100000, status:ACTIVE }
-  11. Создать 365 Payment записей (schedule)
-  12. GET /api/v1/master-account?currency=RUB → core-service → masterAccountId
-  13. POST /api/v1/master-account/transfer → core-service
-      { targetAccountId: clientAccountId, amount: 100000, sourceCurrency: RUB }
-      → Kafka event → консьюмер списывает с мастер-счёта, зачисляет на клиентский
-  14. → 201 CreditResponse
+```
+1. POST /api/v1/credits/{id}/repay {amount}
+2. credit-service: рассчитывает начисленные проценты с last_accrual_at до now()
+3. repayAmount = min(request.amount, remaining + accruedInterest)
+4. CoreServiceClient.withdrawFromAccount(accountId, repayAmount)
+   → POST /api/v1/accounts/{id}/withdraw → core-service (через Kafka)
+5. Распределение: сначала гасит проценты, остаток → principal
+6. Отмечает PAID платежи по расписанию
+7. Если remaining <= 0: credit.status = CLOSED
 ```
 
 ---
 
 ## 11. Надёжность системы
 
-### 11.1 Слои надёжности
+### Уровни гарантий
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  Уровень 1: Idempotency (защита от дубликатов)           │
-│  ─ Каждая операция имеет UUID idempotencyKey             │
-│  ─ При повторном получении → skip (not reprocess)        │
-│  ─ Transfer IN имеет детерминированный ключ:             │
-│    UUID.nameUUIDFromBytes(originalKey + "_IN")           │
-└──────────────────────────────────────────────────────────┘
-┌──────────────────────────────────────────────────────────┐
-│  Уровень 2: Transactional Outbox                         │
-│  ─ Event сохраняется в БД ДО отправки в Kafka            │
-│  ─ Если Kafka недоступна → событие остаётся в outbox     │
-│  ─ Планировщик повторяет каждые 500ms                    │
-│  ─ До 10 попыток, затем FAILED (требует ручного разбора) │
-│  ─ Outbox save в той же транзакции с бизнес-данными      │
-└──────────────────────────────────────────────────────────┘
-┌──────────────────────────────────────────────────────────┐
-│  Уровень 3: Kafka Consumer Retry                         │
-│  ─ core-service: FixedBackOff(5s, 3 retries)            │
-│  ─ client/employee-bff: FixedBackOff(2s, 3 retries)     │
-│  ─ Transient errors (ExchangeRate) → retry               │
-│  ─ Business errors (InsufficientFunds) → no retry        │
-└──────────────────────────────────────────────────────────┘
-┌──────────────────────────────────────────────────────────┐
-│  Уровень 4: Database Transactions                        │
-│  ─ @Transactional на processOperation()                  │
-│  ─ Pessimistic locking (SELECT FOR UPDATE) на трансферах │
-│  ─ Deadlock prevention: всегда lock в порядке id         │
-│  ─ Optimistic locking (@Version) на Account              │
-└──────────────────────────────────────────────────────────┘
-┌──────────────────────────────────────────────────────────┐
-│  Уровень 5: Business Validation                          │
-│  ─ Проверка баланса ДО отправки в Kafka (в HTTP-запросе) │
-│  ─ Проверка снова ПОСЛЕ блокировки счёта в консьюмере   │
-│  ─ Двойная проверка = защита от race conditions          │
-└──────────────────────────────────────────────────────────┘
-```
+| Уровень | Механизм | Гарантия |
+|---------|---------|---------|
+| **Запись операции** | Transactional Outbox | Операция сохраняется атомарно с бизнес-данными |
+| **Доставка в Kafka** | OutboxEventPublisher + retry_count | До 10 попыток с интервалом 500мс |
+| **Обработка операции** | idempotency_key (UNIQUE) | Дублированное сообщение не создаёт дублированную операцию |
+| **Обновление баланса** | Optimistic locking (version field) | Параллельные изменения одного счёта не создают race condition |
+| **Deadlock prevention** | SELECT FOR UPDATE в порядке возрастания ID | Переводы между двумя счетами не дедлочатся |
+| **Повторки консьюмеров** | DefaultErrorHandler(FixedBackOff) | Временные ошибки (курс обмена, WebSocket) retry-ятся |
+| **Инвалидация токенов** | Redis + TokenInvalidationFilter | Токены инвалидируются мгновенно при смене ролей |
+| **Mастер-счета** | 3 счёта (RUB/USD/EUR) с балансом 1 млрд | Кредиты обеспечены достаточным резервом |
 
-### 11.2 Гарантии
+### Потенциальные точки отказа и их обработка
 
-| Ситуация | Что происходит |
-|----------|---------------|
-| Kafka временно недоступна | Событие ждёт в outbox_events (PENDING), отправится когда Kafka вернётся |
-| Дублирующееся Kafka-сообщение | `existsByIdempotencyKey()` → операция пропускается |
-| Два одновременных списания | SELECT FOR UPDATE блокирует второй запрос; второй получит актуальный баланс |
-| ExchangeRate сервис недоступен | Kafka retry (3 попытки × 5s); если не успел — событие остаётся в очереди (pending offset) |
-| core-service упал в середине processOperation | Транзакция откатится; Kafka offset не коммитится; сообщение будет обработано повторно |
+| Ситуация | Последствие | Защита |
+|---------|-------------|--------|
+| Kafka недоступна | Операции не выполняются | outbox_events хранит PENDING до восстановления |
+| Kafka недоступна долго | retry_count достигает 10 | Событие → FAILED, требует ручного разбора |
+| core-service упал после INSERT outbox | Событие не потеряно | OutboxEventPublisher обработает при рестарте |
+| Дублирование сообщения Kafka | Повторное выполнение операции | idempotency_key защищает от дублей |
+| ExchangeRate API недоступен | Трансфер не выполняется | 3 retry (5с), затем пропуск сообщения |
+| Недостаточно средств на счёте | Withdraw не проходит | Сообщение пропускается без retry |
+| Пользователь потерял токен | Неавторизованный доступ | Токен живёт 1 час; refresh token 30 дней |
+| Смена ролей | Старые токены дают некорректные права | Redis инвалидация + TokenInvalidationFilter |
 
-### 11.3 Слабые места
+### Производительность outbox
 
-| Проблема | Описание |
-|----------|----------|
-| **No saga / compensation** | Если после создания AuthUser вызов user-service упал — auth_users содержит запись без соответствующего User |
-| **Sync auth dep** | Каждый login требует вызова user-service; если он недоступен — вход невозможен |
-| **userId resolution per request** | client-bff вызывает user-service на каждый запрос для резолюции userId |
-| **FAILED outbox events** | После 10 попыток событие помечается FAILED — требует ручного вмешательства или механизма алертинга |
-| **Single Kafka partition per account** | Операции по счёту обрабатываются строго последовательно — throughput ограничен |
-| **No circuit breaker** | Нет Resilience4j или аналога; при недоступности сервиса запросы просто падают |
+- Scheduler запускается каждые **500мс** (2 раза в секунду)
+- Обрабатывает до **100 событий** за один запуск
+- Пропускная способность: ~200 операций/сек при нормальной работе Kafka
+- Индекс `WHERE status='PENDING'` обеспечивает эффективный scan только нужных строк
 
 ---
 
 ## 12. Ошибки и их обработка
 
-### 12.1 Единый формат ошибок
+### HTTP ошибки
 
-Каждый сервис имеет `@RestControllerAdvice` с единым форматом ответа:
+Все сервисы используют `@RestControllerAdvice` с единым форматом ответа:
 
 ```json
 {
-  "message": "Недостаточно средств на счёте 1: требуется 500.00 RUB, доступно 200.00 RUB",
-  "status": 400,
-  "timestamp": "2024-01-15T12:30:00"
+  "status": 404,
+  "error": "NOT_FOUND",
+  "message": "Account not found: 123",
+  "timestamp": "2026-03-22T12:00:00Z"
 }
 ```
 
-### 12.2 Каталог исключений
+### Коды ответов
 
-**core-service:**
+| HTTP код | Когда |
+|---------|------|
+| `202 ACCEPTED` | Операция принята в outbox (deposit/withdraw/transfer) |
+| `400 BAD REQUEST` | Невалидные данные (JSR-303 validation) |
+| `401 UNAUTHORIZED` | Токен отсутствует, невалиден, или инвалидирован |
+| `403 FORBIDDEN` | Токен валиден, но недостаточно прав (роль) |
+| `404 NOT FOUND` | Ресурс не существует |
+| `409 CONFLICT` | Бизнес-нарушение (счёт закрыт, недостаточно средств) |
+| `422 UNPROCESSABLE ENTITY` | Логическая ошибка (несовместимые валюты, невалидный диапазон) |
 
-| Exception | HTTP | Когда |
-|-----------|------|-------|
+### Бизнес-исключения в core-service
+
+| Исключение | Код | Описание |
+|-----------|-----|---------|
 | `AccountNotFoundException` | 404 | Счёт не найден |
-| `AccountClosedException` | 400 | Счёт закрыт |
-| `InsufficientFundsException` | 400 | Не хватает средств |
-| `AccountNotEmptyException` | 400 | Попытка закрыть счёт с ненулевым балансом |
-| `ExchangeRateUnavailableException` | 503 | Внешний сервис курсов недоступен |
-
-**credit-service:**
-
-| Exception | HTTP | Когда |
-|-----------|------|-------|
-| `CreditNotFoundException` | 404 | Кредит не найден |
-| `CreditAlreadyClosedException` | 400 | Попытка операции с закрытым кредитом |
-| `InvalidCreditAmountException` | 400 | Сумма вне диапазона тарифа / несовпадение валюты |
-| `TariffNotFoundException` | 404 | Тариф не найден |
-
-**auth-service / user-service:**
-
-| Exception | HTTP | Когда |
-|-----------|------|-------|
-| `EmailAlreadyExistsException` | 409 | Email занят |
-| `UserNotFoundException` | 404 | Пользователь не найден |
-
-**client-bff / employee-bff:**
-
-| Exception | HTTP | Когда |
-|-----------|------|-------|
-| `ResourceAccessDeniedException` | 403 | Попытка доступа к чужому ресурсу |
-
-### 12.3 Поведение Kafka-консьюмера при ошибках
-
-```
-processOperation() бросает исключение
-         │
-         ├── InsufficientFundsException
-         │     → catch в KafkaOperationConsumer
-         │     → log.warn (бизнес-ошибка, повтор бесполезен)
-         │     → offset закоммичен, событие не повторяется
-         │
-         ├── AccountNotFoundException / AccountClosedException
-         │     → то же самое
-         │
-         └── ExchangeRateUnavailableException
-               → rethrow из KafkaOperationConsumer
-               → DefaultErrorHandler перехватывает
-               → FixedBackOff(5s): попытки 1, 2, 3
-               → После 3 попыток: offset закоммичен,
-                 событие попадает в Dead Letter Topic (если настроен)
-                 или просто пропускается с логом
-```
-
----
-
-## Приложение: Быстрый старт
-
-```bash
-# 1. Поднять инфраструктуру
-docker-compose up -d
-
-# 2. Собрать все сервисы
-cd backend && ./gradlew build
-
-# 3. Запустить сервисы (в отдельных терминалах)
-./gradlew :auth-service:bootRun
-./gradlew :user-service:bootRun
-./gradlew :core-service:bootRun
-./gradlew :credit-service:bootRun
-./gradlew :client-bff:bootRun
-./gradlew :employee-bff:bootRun
-
-# 4. Проверить здоровье
-curl http://localhost:8081/.well-known/openid-configuration
-curl http://localhost:8080/api/v1/master-account
-
-# 5. Swagger UI
-http://localhost:8080/swagger-ui.html  # core-service
-http://localhost:8082/swagger-ui.html  # user-service
-http://localhost:8083/swagger-ui.html  # credit-service
-http://localhost:8084/swagger-ui.html  # client-bff
-```
+| `AccountClosedException` | 409 | Счёт закрыт |
+| `InsufficientFundsException` | 409 | Недостаточно средств |
+| `ExchangeRateUnavailableException` | 503 | Курс обмена недоступен |
+| `ResourceAccessDeniedException` | 403 | Счёт не принадлежит пользователю |
