@@ -4,7 +4,6 @@ import com.bank.core.config.KafkaConfig;
 import com.bank.core.dto.kafka.OperationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,12 +11,12 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class KafkaOperationProducer {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final OutboxEventService outboxEventService;
 
     public void send(OperationEvent event) {
         String key = String.valueOf(event.accountId());
-        log.info("Отправка операции в Kafka: topic={}, key={}, idempotencyKey={}",
+        log.info("Сохранение операции в outbox: topic={}, key={}, idempotencyKey={}",
                 KafkaConfig.OPERATIONS_TOPIC, key, event.idempotencyKey());
-        kafkaTemplate.send(KafkaConfig.OPERATIONS_TOPIC, key, event);
+        outboxEventService.save(KafkaConfig.OPERATIONS_TOPIC, key, event);
     }
 }
