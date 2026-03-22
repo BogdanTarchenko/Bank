@@ -3,7 +3,7 @@ import BankShared
 
 enum AccountEndpoint: Endpoint {
     case create(CreateAccountRequest)
-    case getByUserId(Int64)
+    case getAll
     case getById(Int64)
     case close(Int64)
     case deposit(accountId: Int64, MoneyOperationRequest)
@@ -13,12 +13,12 @@ enum AccountEndpoint: Endpoint {
 
     var path: String {
         switch self {
-        case .create, .getByUserId: "/api/v1/proxy/core/accounts"
-        case .getById(let id): "/api/v1/proxy/core/accounts/\(id)"
-        case .close(let id): "/api/v1/proxy/core/accounts/\(id)"
-        case .deposit(let id, _): "/api/v1/proxy/core/accounts/\(id)/deposit"
-        case .withdraw(let id, _): "/api/v1/proxy/core/accounts/\(id)/withdraw"
-        case .operations(let id, _, _): "/api/v1/proxy/core/accounts/\(id)/operations"
+        case .create, .getAll: "/api/v1/accounts"
+        case .getById(let id): "/api/v1/accounts/\(id)"
+        case .close(let id): "/api/v1/accounts/\(id)"
+        case .deposit(let id, _): "/api/v1/accounts/\(id)/deposit"
+        case .withdraw(let id, _): "/api/v1/accounts/\(id)/withdraw"
+        case .operations(let id, _, _): "/api/v1/accounts/\(id)/operations"
         case .masterAccounts: "/api/v1/proxy/core/master-account"
         }
     }
@@ -26,7 +26,7 @@ enum AccountEndpoint: Endpoint {
     var method: HTTPMethod {
         switch self {
         case .create, .deposit, .withdraw: .POST
-        case .getByUserId, .getById, .operations, .masterAccounts: .GET
+        case .getAll, .getById, .operations, .masterAccounts: .GET
         case .close: .DELETE
         }
     }
@@ -42,7 +42,6 @@ enum AccountEndpoint: Endpoint {
 
     var queryItems: [URLQueryItem]? {
         switch self {
-        case .getByUserId(let userId): [URLQueryItem(name: "userId", value: "\(userId)")]
         case .operations(_, let page, let size): [
             URLQueryItem(name: "page", value: "\(page)"),
             URLQueryItem(name: "size", value: "\(size)")

@@ -27,7 +27,7 @@ final class EmployeeAccountListViewModel {
         do {
             state = .loaded(try await useCase.getAllAccounts())
         } catch {
-            state = .error((error as? NetworkError)?.localizedDescription ?? error.localizedDescription)
+            state = .error(error.userMessage)
         }
     }
 }

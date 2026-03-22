@@ -39,7 +39,7 @@ final class CreditApplicationViewModel {
         isLoading = true
         do {
             async let t = creditUseCase.getTariffs()
-            async let a = accountUseCase.getAccounts(userId: userId)
+            async let a = accountUseCase.getAccounts()
             tariffs = try await t.filter(\.active)
             accounts = try await a.filter { !$0.isClosed && $0.accountType == .PERSONAL }
             selectedTariff = tariffs.first
@@ -48,7 +48,7 @@ final class CreditApplicationViewModel {
                 termDays = tariff.minTermDays ?? 30
             }
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
         isLoading = false
     }
@@ -60,12 +60,12 @@ final class CreditApplicationViewModel {
         errorMessage = nil
         do {
             _ = try await creditUseCase.createCredit(request: CreateCreditRequest(
-                userId: userId, accountId: account.id, tariffId: tariff.id,
+                accountId: account.id, tariffId: tariff.id,
                 amount: amount, termDays: termDays
             ))
             success = true
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
         isLoading = false
     }

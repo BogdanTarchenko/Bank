@@ -1,10 +1,13 @@
 import SwiftUI
-import BankShared
 
-struct OperationRow: View {
-    let operation: BankShared.Operation
+public struct OperationRow: View {
+    let operation: Operation
 
-    var body: some View {
+    public init(operation: Operation) {
+        self.operation = operation
+    }
+
+    public var body: some View {
         HStack {
             Image(systemName: iconName)
                 .foregroundStyle(operation.type.isIncoming ? .green : .red)

@@ -8,8 +8,8 @@ final class CreditUseCase: Sendable {
         self.client = client
     }
 
-    func getCredits(userId: Int64) async throws -> [Credit] {
-        try await client.request(CreditEndpoint.getByUserId(userId))
+    func getCredits() async throws -> [Credit] {
+        try await client.request(CreditEndpoint.getAll)
     }
 
     func getCredit(id: Int64) async throws -> Credit {

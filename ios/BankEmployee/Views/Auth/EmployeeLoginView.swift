@@ -42,7 +42,7 @@ struct EmployeeLoginView: View {
                     do {
                         try await authManager.login()
                     } catch {
-                        errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+                        errorMessage = error.userMessage
                     }
                     isLoading = false
                 }

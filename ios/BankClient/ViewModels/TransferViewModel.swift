@@ -57,7 +57,7 @@ final class TransferViewModel {
             try await useCase.transfer(from: from.id, to: toId, amount: amount)
             success = true
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
         isLoading = false
     }

@@ -24,7 +24,7 @@ final class CreditDetailViewModel {
         do {
             payments = try await useCase.getPayments(creditId: credit.id)
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
         isLoadingPayments = false
     }
@@ -39,7 +39,7 @@ final class CreditDetailViewModel {
             repayAmount = ""
             await loadPayments()
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
         isRepaying = false
     }
