@@ -9,6 +9,10 @@ import {
   TextField,
   Box,
   Skeleton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import { useSnackbar } from 'notistack'
@@ -18,6 +22,7 @@ import { LoadingButton } from '@/shared/ui/LoadingButton'
 import { fetchTariffs as fetchTariffsUseCase, createTariff as createTariffUseCase } from '@/usecases/creditUseCases'
 import { formatDate } from '@/shared/utils/format'
 import type { TariffResponse } from '@/entities/credit'
+import { Currency, CurrencyLabel } from '@/entities/common'
 import { ApiError } from '@/api'
 
 export function TariffsPage() {
@@ -29,6 +34,7 @@ export function TariffsPage() {
   const [form, setForm] = useState({
     name: '',
     interestRate: '',
+    currency: Currency.RUB as string,
     minAmount: '',
     maxAmount: '',
     minTermDays: '',
@@ -62,6 +68,7 @@ export function TariffsPage() {
       await createTariffUseCase({
         name: form.name,
         interestRate: parseFloat(form.interestRate),
+        currency: form.currency,
         minAmount: form.minAmount ? parseFloat(form.minAmount) : undefined,
         maxAmount: form.maxAmount ? parseFloat(form.maxAmount) : undefined,
         minTermDays: parseInt(form.minTermDays),
@@ -69,7 +76,7 @@ export function TariffsPage() {
       })
       enqueueSnackbar('Тариф создан', { variant: 'success' })
       setCreateOpen(false)
-      setForm({ name: '', interestRate: '', minAmount: '', maxAmount: '', minTermDays: '', maxTermDays: '' })
+      setForm({ name: '', interestRate: '', currency: Currency.RUB, minAmount: '', maxAmount: '', minTermDays: '', maxTermDays: '' })
       await fetchTariffs()
     } catch (err) {
       if (err instanceof ApiError) {
@@ -102,12 +109,13 @@ export function TariffsPage() {
           { id: 'id', label: 'ID', render: (row: TariffResponse) => <Typography variant="body2">#{row.id}</Typography> },
           { id: 'name', label: 'Название', render: (row: TariffResponse) => <Typography variant="body2" fontWeight={600}>{row.name}</Typography> },
           { id: 'rate', label: 'Ставка', render: (row: TariffResponse) => <Typography variant="body2">{row.interestRate}%</Typography> },
+          { id: 'currency', label: 'Валюта', render: (row: TariffResponse) => <Typography variant="body2">{CurrencyLabel[row.currency] ?? row.currency}</Typography> },
           {
             id: 'amount',
             label: 'Сумма',
             render: (row: TariffResponse) => (
               <Typography variant="body2">
-                {row.minAmount?.toLocaleString('ru-RU') ?? '—'} — {row.maxAmount?.toLocaleString('ru-RU') ?? '—'} ₽
+                {row.minAmount?.toLocaleString('ru-RU') ?? '—'} — {row.maxAmount?.toLocaleString('ru-RU') ?? '—'}
               </Typography>
             ),
           },
@@ -158,6 +166,18 @@ export function TariffsPage() {
               required
               slotProps={{ htmlInput: { min: 0.01, step: 0.01 } }}
             />
+            <FormControl fullWidth>
+              <InputLabel>Валюта</InputLabel>
+              <Select
+                value={form.currency}
+                label="Валюта"
+                onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
+              >
+                {Object.values(Currency).map((c) => (
+                  <MenuItem key={c} value={c}>{CurrencyLabel[c] ?? c}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               label="Мин. сумма"
               type="number"

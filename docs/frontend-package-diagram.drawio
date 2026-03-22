@@ -1,0 +1,184 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 YaBrowser/26.3.0.0 Safari/537.36" version="29.6.4">
+  <diagram name="Frontend Package Diagram" id="frontend-packages">
+    <mxGraphModel dx="3777" dy="1307" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;fontSize=20;fontStyle=1;align=center;verticalAlign=middle;" value="Frontend - Диаграмма пакетов" vertex="1">
+          <mxGeometry height="40" width="500" x="350" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="ui-layer" parent="1" style="shape=folder;fontStyle=0;tabWidth=220;tabHeight=28;tabPosition=left;html=1;whiteSpace=wrap;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;spacingTop=10;rounded=1;" value="&lt;b&gt;UI Layer&lt;/b&gt;&amp;nbsp;" vertex="1">
+          <mxGeometry height="220" width="1040" x="80" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="app-pkg" parent="1" style="shape=folder;tabWidth=80;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fontSize=11;verticalAlign=top;spacingTop=5;" value="&lt;b&gt;app/&lt;/b&gt;&#xa;App.tsx&#xa;Layout.tsx&#xa;ProtectedRoute.tsx&#xa;routes.tsx&#xa;theme.ts" vertex="1">
+          <mxGeometry height="155" width="160" x="100" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="pages-pkg" parent="1" style="shape=folder;tabWidth=80;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fontSize=11;verticalAlign=top;spacingTop=5;" value="&lt;b&gt;pages/&lt;/b&gt;" vertex="1">
+          <mxGeometry height="155" width="530" x="290" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-pages" parent="1" style="shape=folder;tabWidth=60;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=10;fillColor=#FFFFFF;strokeColor=#000000;verticalAlign=top;spacingTop=3;" value="&lt;b&gt;auth/&lt;/b&gt;&#xa;LoginPage&#xa;RegisterPage&#xa;CallbackPage" vertex="1">
+          <mxGeometry height="100" width="130" x="305" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="client-pages" parent="1" style="shape=folder;tabWidth=60;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=10;fillColor=#FFFFFF;strokeColor=#000000;verticalAlign=top;spacingTop=3;" value="&lt;b&gt;client/&lt;/b&gt;&#xa;DashboardPage&#xa;AccountDetailPage&#xa;CreditDetailPage&#xa;CreditsPage, NewCreditPage&#xa;TransferPage, SettingsPage" vertex="1">
+          <mxGeometry height="100" width="180" x="450" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="employee-pages" parent="1" style="shape=folder;tabWidth=70;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=10;fillColor=#FFFFFF;strokeColor=#000000;verticalAlign=top;spacingTop=3;" value="&lt;b&gt;employee/&lt;/b&gt;&#xa;DashboardPage&#xa;UsersPage, UserDetailPage&#xa;TariffsPage&#xa;ClientCreditsPage&#xa;SettingsPage" vertex="1">
+          <mxGeometry height="100" width="160" x="645" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="shared-ui-pkg" parent="1" style="shape=folder;tabWidth=80;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;spacingTop=5;" value="&lt;b&gt;shared/ui/&lt;/b&gt;&lt;br&gt;ConfirmDialog&lt;br&gt;DataTable&lt;br&gt;EmptyState&lt;br&gt;LoadingButton&lt;br&gt;MoneyDisplay&lt;br&gt;PageLayout&lt;br&gt;StatusChip" vertex="1">
+          <mxGeometry height="130" width="250" x="-280" y="254" as="geometry" />
+        </mxCell>
+        <mxCell id="bl-layer" parent="1" style="shape=folder;fontStyle=0;tabWidth=320;tabHeight=28;tabPosition=left;html=1;whiteSpace=wrap;fontSize=14;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;spacingTop=10;rounded=1;" value="&lt;b&gt;Business Logic Layer&lt;/b&gt;&amp;nbsp;" vertex="1">
+          <mxGeometry height="180" width="1040" x="80" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="usecases-pkg" parent="1" style="shape=folder;tabWidth=80;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fontSize=11;verticalAlign=top;spacingTop=5;" value="&lt;b&gt;usecases/&lt;/b&gt;&#xa;accountUseCases&#xa;authUseCases&#xa;creditUseCases&#xa;settingsUseCases&#xa;transferUseCases&#xa;userUseCases" vertex="1">
+          <mxGeometry height="120" width="200" x="100" y="405" as="geometry" />
+        </mxCell>
+        <mxCell id="store-pkg" parent="1" style="shape=folder;tabWidth=80;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fontSize=11;verticalAlign=top;spacingTop=5;" value="&lt;b&gt;store/&lt;/b&gt;&#xa;authStore&#xa;settingsStore" vertex="1">
+          <mxGeometry height="120" width="160" x="340" y="405" as="geometry" />
+        </mxCell>
+        <mxCell id="shared-utils-pkg" parent="1" style="shape=folder;tabWidth=80;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;spacingTop=5;align=left;spacingLeft=10;" value="&lt;b&gt;shared/&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;hooks/&lt;/b&gt;&amp;nbsp;&lt;div&gt;&lt;br&gt;&lt;b&gt;utils/format.ts&lt;/b&gt;&amp;nbsp;&lt;br&gt;&lt;b&gt;utils/globalErrorHandler.ts&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="120" width="260" x="-280" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="api-layer" parent="1" style="shape=folder;fontStyle=0;tabWidth=420;tabHeight=28;tabPosition=left;html=1;whiteSpace=wrap;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;spacingTop=10;rounded=1;" value="&lt;b&gt;API Layer&lt;/b&gt;&amp;nbsp;" vertex="1">
+          <mxGeometry height="130" width="1040" x="80" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="api-account" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#000000;" value="accountApi" vertex="1">
+          <mxGeometry height="30" width="100" x="100" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="api-auth" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#000000;" value="authApi" vertex="1">
+          <mxGeometry height="30" width="100" x="215" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="api-credit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#000000;" value="creditApi" vertex="1">
+          <mxGeometry height="30" width="100" x="330" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="api-operation" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#000000;" value="operationApi" vertex="1">
+          <mxGeometry height="30" width="100" x="445" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="api-settings" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#000000;" value="settingsApi" vertex="1">
+          <mxGeometry height="30" width="100" x="560" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="api-transfer" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#000000;" value="transferApi" vertex="1">
+          <mxGeometry height="30" width="100" x="675" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="api-user" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#000000;" value="userApi" vertex="1">
+          <mxGeometry height="30" width="100" x="790" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="net-layer" parent="1" style="shape=folder;fontStyle=0;tabWidth=410;tabHeight=28;tabPosition=left;html=1;whiteSpace=wrap;fontSize=14;fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;spacingTop=10;rounded=1;" value="&lt;b&gt;Network Layer&lt;/b&gt;&amp;nbsp;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="120" width="1040" x="80" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="net-http" parent="1" style="shape=folder;tabWidth=90;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=11;fillColor=#FFFFFF;strokeColor=#000000;verticalAlign=top;spacingTop=3;" value="&lt;b&gt;httpClient.ts&lt;/b&gt;&#xa;Axios instance, interceptors,&#xa;token refresh, error transform" vertex="1">
+          <mxGeometry height="60" width="250" x="100" y="835" as="geometry" />
+        </mxCell>
+        <mxCell id="net-endpoints" parent="1" style="shape=folder;tabWidth=90;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=11;fillColor=#FFFFFF;strokeColor=#000000;verticalAlign=top;spacingTop=3;" value="&lt;b&gt;endpoints.ts&lt;/b&gt;&#xa;URL-константы для всех&#xa;API-эндпоинтов" vertex="1">
+          <mxGeometry height="60" width="230" x="390" y="835" as="geometry" />
+        </mxCell>
+        <mxCell id="net-ws" parent="1" style="shape=folder;tabWidth=90;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=11;fillColor=#FFFFFF;strokeColor=#000000;verticalAlign=top;spacingTop=3;" value="&lt;b&gt;wsClient.ts&lt;/b&gt;&#xa;WebSocket (STOMP)&#xa;real-time подписки" vertex="1">
+          <mxGeometry height="60" width="220" x="660" y="835" as="geometry" />
+        </mxCell>
+        <mxCell id="entities-layer" parent="1" style="shape=folder;fontStyle=0;tabWidth=350;tabHeight=28;tabPosition=left;html=1;whiteSpace=wrap;fontSize=14;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;spacingTop=10;rounded=1;" value="&lt;b&gt;Entities&lt;/b&gt;&amp;nbsp;" vertex="1">
+          <mxGeometry height="550" width="220" x="1160" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="ent-account" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#666666;" value="account.ts" vertex="1">
+          <mxGeometry height="28" width="170" x="1185" y="415" as="geometry" />
+        </mxCell>
+        <mxCell id="ent-auth" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#666666;" value="auth.ts" vertex="1">
+          <mxGeometry height="28" width="170" x="1185" y="455" as="geometry" />
+        </mxCell>
+        <mxCell id="ent-common" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#666666;" value="common.ts" vertex="1">
+          <mxGeometry height="28" width="170" x="1185" y="495" as="geometry" />
+        </mxCell>
+        <mxCell id="ent-credit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#666666;" value="credit.ts" vertex="1">
+          <mxGeometry height="28" width="170" x="1185" y="535" as="geometry" />
+        </mxCell>
+        <mxCell id="ent-operation" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#666666;" value="operation.ts" vertex="1">
+          <mxGeometry height="28" width="170" x="1185" y="575" as="geometry" />
+        </mxCell>
+        <mxCell id="ent-settings" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#666666;" value="settings.ts" vertex="1">
+          <mxGeometry height="28" width="170" x="1185" y="615" as="geometry" />
+        </mxCell>
+        <mxCell id="ent-transfer" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#666666;" value="transfer.ts" vertex="1">
+          <mxGeometry height="28" width="170" x="1185" y="655" as="geometry" />
+        </mxCell>
+        <mxCell id="ent-user" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#FFFFFF;strokeColor=#666666;" value="user.ts" vertex="1">
+          <mxGeometry height="28" width="170" x="1185" y="695" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow-ui-bl" edge="1" parent="1" source="ui-layer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;containsPoints=1;strokeWidth=2;strokeColor=#82b366;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="bl-layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow-pages-sharedui" edge="1" parent="1" source="ui-layer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;containsPoints=1;strokeWidth=1.5;strokeColor=#9673a6;dashed=1;exitX=0.321;exitY=0.996;exitDx=0;exitDy=0;entryX=1.008;entryY=0.663;entryDx=0;entryDy=0;exitPerimeter=0;entryPerimeter=0;" target="shared-ui-pkg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow-bl-api" edge="1" parent="1" source="bl-layer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;containsPoints=1;strokeWidth=2;strokeColor=#d6b656;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="api-layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow-api-net" edge="1" parent="1" source="api-layer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;containsPoints=1;strokeWidth=2;strokeColor=#b85450;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="net-layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow-bl-ent" edge="1" parent="1" source="bl-layer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;containsPoints=1;strokeWidth=1.5;strokeColor=#666666;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.15;entryDx=0;entryDy=0;" target="entities-layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow-api-ent" edge="1" parent="1" source="api-layer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;containsPoints=1;strokeWidth=1.5;strokeColor=#666666;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.55;entryDx=0;entryDy=0;" target="entities-layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="backend-ext" parent="1" style="shape=component;align=center;spacingLeft=36;whiteSpace=wrap;html=1;fontSize=12;" value="&lt;b&gt;Backend (BFF)&lt;/b&gt;&#xa;client-bff / employee-bff" vertex="1">
+          <mxGeometry height="50" width="220" x="350" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow-net-backend" edge="1" parent="1" source="net-layer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;containsPoints=1;strokeWidth=2;strokeColor=#996185;exitX=0.4;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="backend-ext">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow-net-backend-label" connectable="0" parent="arrow-net-backend" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=2;" value="HTTP / WebSocket" vertex="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;dashed=1;" value="" vertex="1">
+          <mxGeometry height="240" width="220" x="1160" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" parent="1" style="text;html=1;fontSize=12;align=center;" value="&lt;b&gt;Легенда&lt;/b&gt;" vertex="1">
+          <mxGeometry height="20" width="100" x="1220" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" parent="1" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="" vertex="1">
+          <mxGeometry height="14" width="20" x="1175" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1t" parent="1" style="text;html=1;fontSize=10;align=left;" value="UI Layer" vertex="1">
+          <mxGeometry height="20" width="100" x="1200" y="112" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" parent="1" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="" vertex="1">
+          <mxGeometry height="14" width="20" x="1175" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2t" parent="1" style="text;html=1;fontSize=10;align=left;" value="Business Logic" vertex="1">
+          <mxGeometry height="20" width="100" x="1200" y="137" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="" vertex="1">
+          <mxGeometry height="14" width="20" x="1175" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3t" parent="1" style="text;html=1;fontSize=10;align=left;" value="API Layer" vertex="1">
+          <mxGeometry height="20" width="100" x="1200" y="162" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" parent="1" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;" value="" vertex="1">
+          <mxGeometry height="14" width="20" x="1175" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4t" parent="1" style="text;html=1;fontSize=10;align=left;" value="Network Layer" vertex="1">
+          <mxGeometry height="20" width="100" x="1200" y="187" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" parent="1" style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;" value="" vertex="1">
+          <mxGeometry height="14" width="20" x="1175" y="215" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5t" parent="1" style="text;html=1;fontSize=10;align=left;" value="Entities (DTO)" vertex="1">
+          <mxGeometry height="20" width="100" x="1200" y="212" as="geometry" />
+        </mxCell>
+        <mxCell id="leg6" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="" vertex="1">
+          <mxGeometry height="14" width="20" x="1175" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="leg6t" parent="1" style="text;html=1;fontSize=10;align=left;" value="Shared (reusable)" vertex="1">
+          <mxGeometry height="20" width="120" x="1200" y="237" as="geometry" />
+        </mxCell>
+        <mxCell id="-mcZJ6j0NAVuyVvcjmyo-5" edge="1" parent="1" source="bl-layer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;containsPoints=1;strokeWidth=1.5;strokeColor=#9673a6;dashed=1;exitX=0;exitY=0;exitDx=0;exitDy=104;entryX=0;entryY=0;entryDx=260;entryDy=70;exitPerimeter=0;entryPerimeter=0;" target="shared-utils-pkg">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820" y="320" as="sourcePoint" />
+            <mxPoint x="870" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

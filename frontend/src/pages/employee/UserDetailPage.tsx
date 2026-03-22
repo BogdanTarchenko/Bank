@@ -78,7 +78,7 @@ export function UserDetailPage() {
       const updated = await updateUserRoles(userId, selectedRoles)
       setUser(updated)
       setSelectedRoles(updated.roles)
-      enqueueSnackbar('Роли обновлены', { variant: 'success' })
+      enqueueSnackbar('Роли обновлены. Пользователю потребуется повторный вход.', { variant: 'success' })
     } catch (err) {
       if (err instanceof ApiError) {
         enqueueSnackbar(err.message, { variant: 'error' })

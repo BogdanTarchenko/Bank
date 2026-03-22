@@ -21,7 +21,7 @@ import { DataTable } from '@/shared/ui/DataTable'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
 import { fetchCreditDetail, repayCredit as repayCreditUseCase } from '@/usecases/creditUseCases'
 import { formatDate } from '@/shared/utils/format'
-import { Currency, CreditStatus } from '@/entities/common'
+import { CreditStatus } from '@/entities/common'
 import type { CreditResponse, PaymentResponse } from '@/entities/credit'
 import { ApiError } from '@/api'
 
@@ -102,23 +102,27 @@ export function CreditDetailPage() {
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 3 }}>
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Typography variant="body2" color="text.secondary">Остаток</Typography>
-              <MoneyDisplay amount={credit.remaining} currency={Currency.RUB} variant="h4" />
+              <MoneyDisplay amount={credit.remaining} currency={credit.currency} variant="h4" />
             </Grid>
             <Grid size={{ xs: 6, md: 2 }}>
               <Typography variant="body2" color="text.secondary">Сумма кредита</Typography>
-              <MoneyDisplay amount={credit.principal} currency={Currency.RUB} variant="h6" />
+              <MoneyDisplay amount={credit.principal} currency={credit.currency} variant="h6" />
+            </Grid>
+            <Grid size={{ xs: 6, md: 2 }}>
+              <Typography variant="body2" color="text.secondary">Начислено %</Typography>
+              <MoneyDisplay amount={credit.accruedInterest} currency={credit.currency} variant="h6" />
             </Grid>
             <Grid size={{ xs: 6, md: 2 }}>
               <Typography variant="body2" color="text.secondary">Ставка</Typography>
               <Typography variant="h6">{credit.interestRate}%</Typography>
             </Grid>
-            <Grid size={{ xs: 6, md: 2 }}>
+            <Grid size={{ xs: 6, md: 1.5 }}>
               <Typography variant="body2" color="text.secondary">Платёж/день</Typography>
-              <MoneyDisplay amount={credit.dailyPayment} currency={Currency.RUB} variant="h6" />
+              <MoneyDisplay amount={credit.dailyPayment} currency={credit.currency} variant="h6" />
             </Grid>
-            <Grid size={{ xs: 6, md: 2 }}>
+            <Grid size={{ xs: 6, md: 1.5 }}>
               <Typography variant="body2" color="text.secondary">Статус</Typography>
               <StatusChip status={credit.status} size="medium" />
             </Grid>
@@ -143,7 +147,7 @@ export function CreditDetailPage() {
             id: 'amount',
             label: 'Сумма',
             align: 'right',
-            render: (row: PaymentResponse) => <MoneyDisplay amount={row.amount} currency={Currency.RUB} variant="body2" />,
+            render: (row: PaymentResponse) => <MoneyDisplay amount={row.amount} currency={row.currency} variant="body2" />,
           },
           { id: 'status', label: 'Статус', render: (row: PaymentResponse) => <StatusChip status={row.status} /> },
           {

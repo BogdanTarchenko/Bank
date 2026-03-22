@@ -39,7 +39,7 @@ export const endpoints = {
     user: (id: number) => `${EMPLOYEE_BFF}/proxy/user/users/${id}`,
     userBlock: (id: number) => `${EMPLOYEE_BFF}/proxy/user/users/${id}/block`,
     userUnblock: (id: number) => `${EMPLOYEE_BFF}/proxy/user/users/${id}/unblock`,
-    userRoles: (id: number) => `${EMPLOYEE_BFF}/proxy/user/users/${id}/roles`,
+    userRoles: (id: number) => `${EMPLOYEE_BFF}/users/${id}/roles`,
     availableRoles: `${EMPLOYEE_BFF}/proxy/user/users/roles`,
     settings: `${EMPLOYEE_BFF}/settings`,
   },

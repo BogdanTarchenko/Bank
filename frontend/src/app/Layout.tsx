@@ -53,7 +53,7 @@ export function Layout() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, activeRole, setActiveRole, logout, hasRole } = useAuthStore()
+  const { user, activeRole, setActiveRole, hasRole } = useAuthStore()
   const { theme, setTheme } = useSettingsStore()
 
   const menuItems = activeRole === 'employee' ? employeeMenuItems : clientMenuItems

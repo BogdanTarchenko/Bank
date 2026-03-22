@@ -1,4 +1,4 @@
-import type { CreditStatus, PaymentStatus } from './common'
+import type { CreditStatus, Currency, PaymentStatus } from './common'
 
 export interface CreditResponse {
   id: number
@@ -7,7 +7,9 @@ export interface CreditResponse {
   tariffId: number
   tariffName: string
   principal: number
+  currency: Currency
   remaining: number
+  accruedInterest: number
   interestRate: number
   termDays: number
   dailyPayment: number
@@ -31,6 +33,7 @@ export interface PaymentResponse {
   id: number
   creditId: number
   amount: number
+  currency: Currency
   status: PaymentStatus
   dueDate: string
   paidAt: string | null
@@ -40,6 +43,7 @@ export interface TariffResponse {
   id: number
   name: string
   interestRate: number
+  currency: string
   minAmount: number | null
   maxAmount: number | null
   minTermDays: number
@@ -51,6 +55,7 @@ export interface TariffResponse {
 export interface CreateTariffRequest {
   name: string
   interestRate: number
+  currency?: string
   minAmount?: number
   maxAmount?: number
   minTermDays: number

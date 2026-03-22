@@ -18,10 +18,10 @@ import { StatusChip } from '@/shared/ui/StatusChip'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { useAuthStore } from '@/store/authStore'
 import { fetchClientCreditsWithRating } from '@/usecases/creditUseCases'
-import { formatDateShort } from '@/shared/utils/format'
+import { formatDateShort, formatMoney } from '@/shared/utils/format'
 import type { CreditResponse } from '@/entities/credit'
 import type { CreditRatingResponse } from '@/entities/credit'
-import { Currency, CreditGradeLabel } from '@/entities/common'
+import { CreditGradeLabel } from '@/entities/common'
 import { ApiError } from '@/api'
 
 export function CreditsPage() {
@@ -125,9 +125,9 @@ export function CreditsPage() {
                       </Typography>
                       <StatusChip status={credit.status} />
                     </Box>
-                    <MoneyDisplay amount={credit.remaining} currency={Currency.RUB} variant="h5" sx={{ mb: 1 }} />
+                    <MoneyDisplay amount={credit.remaining} currency={credit.currency} variant="h5" sx={{ mb: 1 }} />
                     <Typography variant="body2" color="text.secondary">
-                      из {credit.principal.toLocaleString('ru-RU')} ₽ • {credit.interestRate}% годовых
+                      из {formatMoney(credit.principal, credit.currency)} • {credit.interestRate}% годовых
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Дата: {formatDateShort(credit.createdAt)} • {credit.termDays} дней

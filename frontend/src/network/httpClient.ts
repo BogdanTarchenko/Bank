@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { ErrorResponse } from '@/entities/common'
+import { useAuthStore } from '@/store/authStore'
 
 export class ApiError extends Error {
   status: number
@@ -27,6 +28,7 @@ const httpClient = axios.create({
 })
 
 const AUTH_URLS = ['/auth/oauth2/token', '/auth/userinfo', '/auth/api/v1/auth/register']
+const BFF_PREFIXES = ['/api/client', '/api/employee']
 
 httpClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
@@ -44,10 +46,16 @@ httpClient.interceptors.response.use(
       const isAuthUrl = AUTH_URLS.some((url) => requestUrl.includes(url))
 
       if (error.response?.status === 401 && !isAuthUrl) {
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
+        useAuthStore.getState().logout()
         window.location.href = '/login'
         return Promise.reject(new ApiError(401, 'Unauthorized', 'Сессия истекла', new Date().toISOString()))
+      }
+
+      const isBffUrl = BFF_PREFIXES.some((prefix) => requestUrl.startsWith(prefix))
+      if (error.response?.status === 403 && isBffUrl && !isAuthUrl) {
+        useAuthStore.getState().logout()
+        window.location.href = '/login'
+        return Promise.reject(new ApiError(403, 'Forbidden', 'Недостаточно прав. Выполните повторный вход.', new Date().toISOString()))
       }
 
       const data = error.response?.data as ErrorResponse | undefined

@@ -16,7 +16,9 @@ import { PageLayout } from '@/shared/ui/PageLayout'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
 import { fetchClientAccounts } from '@/usecases/accountUseCases'
 import { fetchTariffs, createCredit as createCreditUseCase } from '@/usecases/creditUseCases'
-import { formatMoney } from '@/shared/utils/format'
+import { formatMoney, getCurrencySymbol } from '@/shared/utils/format'
+import { CurrencyLabel } from '@/entities/common'
+import type { Currency } from '@/entities/common'
 import type { AccountResponse } from '@/entities/account'
 import type { TariffResponse } from '@/entities/credit'
 import { ApiError } from '@/api'
@@ -55,6 +57,14 @@ export function NewCreditPage() {
   }, [fetchData])
 
   const selectedTariff = tariffs.find((t) => t.id === tariffId)
+  const filteredAccounts = selectedTariff
+    ? accounts.filter((a) => a.currency === selectedTariff.currency)
+    : accounts
+
+  const handleTariffChange = (newTariffId: number) => {
+    setTariffId(newTariffId)
+    setAccountId('')
+  }
 
   const handleSubmit = async () => {
     if (!accountId || !tariffId || !amount || !termDays) {
@@ -104,11 +114,11 @@ export function NewCreditPage() {
             <Select
               value={tariffId}
               label="Тариф"
-              onChange={(e) => setTariffId(e.target.value as number)}
+              onChange={(e) => handleTariffChange(e.target.value as number)}
             >
               {tariffs.map((t) => (
                 <MenuItem key={t.id} value={t.id}>
-                  {t.name} — {t.interestRate}% годовых
+                  {t.name} — {t.interestRate}% ({CurrencyLabel[t.currency] ?? t.currency})
                 </MenuItem>
               ))}
             </Select>
@@ -117,10 +127,12 @@ export function NewCreditPage() {
           {selectedTariff && (
             <Alert severity="info" sx={{ mb: 2 }}>
               Ставка: {selectedTariff.interestRate}%
-              {selectedTariff.minAmount && ` • от ${selectedTariff.minAmount.toLocaleString('ru-RU')} ₽`}
-              {selectedTariff.maxAmount && ` • до ${selectedTariff.maxAmount.toLocaleString('ru-RU')} ₽`}
+              {` • Валюта: ${CurrencyLabel[selectedTariff.currency] ?? selectedTariff.currency}`}
+              {selectedTariff.minAmount && ` • от ${selectedTariff.minAmount.toLocaleString('ru-RU')} ${getCurrencySymbol(selectedTariff.currency as Currency)}`}
+              {selectedTariff.maxAmount && ` • до ${selectedTariff.maxAmount.toLocaleString('ru-RU')} ${getCurrencySymbol(selectedTariff.currency as Currency)}`}
               {` • от ${selectedTariff.minTermDays} дней`}
               {selectedTariff.maxTermDays && ` до ${selectedTariff.maxTermDays} дней`}
+              {filteredAccounts.length === 0 && ` • ⚠ Нет счетов в валюте ${CurrencyLabel[selectedTariff.currency] ?? selectedTariff.currency}`}
             </Alert>
           )}
 
@@ -130,8 +142,9 @@ export function NewCreditPage() {
               value={accountId}
               label="Счёт зачисления"
               onChange={(e) => setAccountId(e.target.value as number)}
+              disabled={filteredAccounts.length === 0}
             >
-              {accounts.map((a) => (
+              {filteredAccounts.map((a) => (
                 <MenuItem key={a.id} value={a.id}>
                   Счёт #{a.id} — {formatMoney(a.balance, a.currency)}
                 </MenuItem>

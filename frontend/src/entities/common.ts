@@ -74,7 +74,7 @@ export type AccountType = (typeof AccountType)[keyof typeof AccountType]
 
 export const OperationType = {
   DEPOSIT: 'DEPOSIT',
-  WITHDRAW: 'WITHDRAW',
+  WITHDRAWAL: 'WITHDRAWAL',
   TRANSFER_IN: 'TRANSFER_IN',
   TRANSFER_OUT: 'TRANSFER_OUT',
 } as const

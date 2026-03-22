@@ -13,7 +13,10 @@ import { initGlobalErrorHandlers, setGlobalErrorListener } from '@/shared/utils/
 function GlobalErrorBridge() {
   const { enqueueSnackbar } = useSnackbar()
   const snackbarRef = useRef(enqueueSnackbar)
-  snackbarRef.current = enqueueSnackbar
+
+  useEffect(() => {
+    snackbarRef.current = enqueueSnackbar
+  }, [enqueueSnackbar])
 
   useEffect(() => {
     setGlobalErrorListener((message) => {

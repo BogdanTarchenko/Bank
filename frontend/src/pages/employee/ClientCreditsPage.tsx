@@ -17,8 +17,8 @@ import { EmptyState } from '@/shared/ui/EmptyState'
 import { DataTable } from '@/shared/ui/DataTable'
 import { fetchUserCreditsWithRating, fetchCreditPayments } from '@/usecases/creditUseCases'
 import { fetchUserById } from '@/usecases/userUseCases'
-import { formatDateShort, formatDate } from '@/shared/utils/format'
-import { Currency, CreditGradeLabel } from '@/entities/common'
+import { formatDateShort, formatDate, formatMoney } from '@/shared/utils/format'
+import { CreditGradeLabel } from '@/entities/common'
 import type { CreditResponse, PaymentResponse, CreditRatingResponse } from '@/entities/credit'
 import type { UserResponse } from '@/entities/user'
 import { ApiError } from '@/api'
@@ -128,9 +128,9 @@ export function ClientCreditsPage() {
                       <Typography variant="subtitle1" fontWeight={600}>{credit.tariffName}</Typography>
                       <StatusChip status={credit.status} />
                     </Box>
-                    <MoneyDisplay amount={credit.remaining} currency={Currency.RUB} variant="h5" sx={{ mb: 1 }} />
+                    <MoneyDisplay amount={credit.remaining} currency={credit.currency} variant="h5" sx={{ mb: 1 }} />
                     <Typography variant="body2" color="text.secondary">
-                      из {credit.principal.toLocaleString('ru-RU')} ₽ • {credit.interestRate}% • {formatDateShort(credit.createdAt)}
+                      из {formatMoney(credit.principal, credit.currency)} • {credit.interestRate}% • {formatDateShort(credit.createdAt)}
                     </Typography>
                   </CardContent>
                 </CardActionArea>
@@ -152,7 +152,7 @@ export function ClientCreditsPage() {
                 id: 'amount',
                 label: 'Сумма',
                 align: 'right',
-                render: (row: PaymentResponse) => <MoneyDisplay amount={row.amount} currency={Currency.RUB} variant="body2" />,
+                render: (row: PaymentResponse) => <MoneyDisplay amount={row.amount} currency={row.currency} variant="body2" />,
               },
               { id: 'status', label: 'Статус', render: (row: PaymentResponse) => <StatusChip status={row.status} /> },
               {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Box, CircularProgress, Typography } from '@mui/material'
 import { handleAuthCallback } from '@/usecases/authUseCases'
@@ -6,26 +6,22 @@ import { handleAuthCallback } from '@/usecases/authUseCases'
 export function CallbackPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
+  const [asyncError, setAsyncError] = useState<string | null>(null)
   const processedRef = useRef(false)
 
+  const code = searchParams.get('code')
+  const state = searchParams.get('state')
+  const errorParam = searchParams.get('error')
+
+  const immediateError = useMemo(() => {
+    if (errorParam) return `Ошибка авторизации: ${errorParam}`
+    if (!code || !state) return 'Отсутствуют параметры авторизации'
+    return null
+  }, [errorParam, code, state])
+
   useEffect(() => {
-    if (processedRef.current) return
+    if (processedRef.current || immediateError || !code || !state) return
     processedRef.current = true
-
-    const code = searchParams.get('code')
-    const state = searchParams.get('state')
-    const errorParam = searchParams.get('error')
-
-    if (errorParam) {
-      setError(`Ошибка авторизации: ${errorParam}`)
-      return
-    }
-
-    if (!code || !state) {
-      setError('Отсутствуют параметры авторизации')
-      return
-    }
 
     handleAuthCallback(code, state)
       .then(({ role }) => {
@@ -33,9 +29,11 @@ export function CallbackPage() {
       })
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : 'Неизвестная ошибка'
-        setError(message)
+        setAsyncError(message)
       })
-  }, [searchParams, navigate])
+  }, [code, state, immediateError, navigate])
+
+  const error = immediateError ?? asyncError
 
   if (error) {
     return (
