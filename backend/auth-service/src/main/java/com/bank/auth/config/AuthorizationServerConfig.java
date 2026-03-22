@@ -9,11 +9,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -68,7 +73,7 @@ public class AuthorizationServerConfig {
 
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
-        RegisteredClient clientBff = RegisteredClient.withId(UUID.randomUUID().toString())
+        RegisteredClient clientBff = RegisteredClient.withId("client-bff-id")
                 .clientId("client-bff")
                 .clientSecret("{noop}client-bff-secret")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
@@ -76,6 +81,8 @@ public class AuthorizationServerConfig {
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .redirectUri("http://localhost:8084/login/oauth2/code/auth-service")
                 .redirectUri("bankapp://callback")
+                .postLogoutRedirectUri("bankapp://logout-callback")
+                .postLogoutRedirectUri("http://localhost:8084")
                 .scope("openid")
                 .scope("profile")
                 .scope("accounts.read")
@@ -92,7 +99,7 @@ public class AuthorizationServerConfig {
                         .build())
                 .build();
 
-        RegisteredClient employeeBff = RegisteredClient.withId(UUID.randomUUID().toString())
+        RegisteredClient employeeBff = RegisteredClient.withId("employee-bff-id")
                 .clientId("employee-bff")
                 .clientSecret("{noop}employee-bff-secret")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
@@ -100,6 +107,8 @@ public class AuthorizationServerConfig {
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .redirectUri("http://localhost:8085/login/oauth2/code/auth-service")
                 .redirectUri("bankemployee://callback")
+                .postLogoutRedirectUri("bankemployee://logout-callback")
+                .postLogoutRedirectUri("http://localhost:8085")
                 .scope("openid")
                 .scope("profile")
                 .scope("admin")
@@ -114,6 +123,20 @@ public class AuthorizationServerConfig {
                 .build();
 
         return new InMemoryRegisteredClientRepository(clientBff, employeeBff);
+    }
+
+    @Bean
+    public OAuth2AuthorizationService authorizationService(
+            JdbcOperations jdbcOperations,
+            RegisteredClientRepository registeredClientRepository) {
+        return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
+    }
+
+    @Bean
+    public OAuth2AuthorizationConsentService authorizationConsentService(
+            JdbcOperations jdbcOperations,
+            RegisteredClientRepository registeredClientRepository) {
+        return new JdbcOAuth2AuthorizationConsentService(jdbcOperations, registeredClientRepository);
     }
 
     @Bean
