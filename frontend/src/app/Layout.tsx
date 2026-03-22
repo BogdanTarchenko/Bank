@@ -30,6 +30,7 @@ import LightModeIcon from '@mui/icons-material/LightMode'
 import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { Theme, Role } from '@/entities/common'
+import { performLogout } from '@/usecases/authUseCases'
 
 const DRAWER_WIDTH = 260
 
@@ -144,9 +145,8 @@ export function Layout() {
             )}
             <MenuItem
               onClick={() => {
-                logout()
                 setAnchorEl(null)
-                window.location.href = 'http://localhost:8081/logout'
+                performLogout()
               }}
             >
               Выйти

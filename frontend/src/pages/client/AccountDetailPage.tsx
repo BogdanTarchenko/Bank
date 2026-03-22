@@ -21,15 +21,20 @@ import { DataTable } from '@/shared/ui/DataTable'
 import { StatusChip } from '@/shared/ui/StatusChip'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
-import { accountApi } from '@/api/accountApi'
-import { operationApi } from '@/api/operationApi'
+import {
+  fetchAccount as fetchAccountUseCase,
+  fetchOperationsPage,
+  depositToAccount,
+  withdrawFromAccount,
+  closeAccount as closeAccountUseCase,
+  subscribeToOperations,
+} from '@/usecases/accountUseCases'
 import { formatDate } from '@/shared/utils/format'
 import { formatMoney } from '@/shared/utils/format'
 import { OperationType, CurrencyLabel, OperationTypeLabel } from '@/entities/common'
 import type { AccountResponse } from '@/entities/account'
 import type { OperationResponse } from '@/entities/operation'
-import { ApiError } from '@/network/httpClient'
-import { connectWebSocket, subscribeToAccountOperations, getStompClient } from '@/network/wsClient'
+import { ApiError } from '@/api'
 
 type ModalType = 'deposit' | 'withdraw' | null
 
@@ -54,7 +59,7 @@ export function AccountDetailPage() {
 
   const fetchAccount = useCallback(async () => {
     try {
-      const data = await accountApi.getAccount(accountId, portal)
+      const data = await fetchAccountUseCase(accountId, portal)
       setAccount(data)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -65,7 +70,7 @@ export function AccountDetailPage() {
 
   const fetchOperations = useCallback(async (p: number) => {
     try {
-      const data = await operationApi.getOperations(accountId, p, 20, portal)
+      const data = await fetchOperationsPage(accountId, p, 20, portal)
       setOperations(data.content)
       setTotalCount(data.totalElements)
     } catch (err) {
@@ -80,26 +85,14 @@ export function AccountDetailPage() {
   }, [fetchAccount, fetchOperations])
 
   useEffect(() => {
-    const client = getStompClient() ?? connectWebSocket()
-    let unsubscribe: (() => void) | null = null
-
-    const onConnect = () => {
-      unsubscribe = subscribeToAccountOperations(accountId, (op) => {
-        setOperations((prev) => [op, ...prev])
-        setTotalCount((prev) => prev + 1)
-        fetchAccount()
-      })
-    }
-
-    if (client.connected) {
-      onConnect()
-    } else {
-      client.onConnect = onConnect
-      client.activate()
-    }
+    const unsubscribe = subscribeToOperations(accountId, (op) => {
+      setOperations((prev) => [op, ...prev])
+      setTotalCount((prev) => prev + 1)
+      fetchAccount()
+    })
 
     return () => {
-      unsubscribe?.()
+      unsubscribe()
     }
   }, [accountId, fetchAccount])
 
@@ -113,10 +106,10 @@ export function AccountDetailPage() {
         return
       }
       if (modal === 'deposit') {
-        await accountApi.deposit(accountId, { amount: parsedAmount })
+        await depositToAccount(accountId, { amount: parsedAmount })
         enqueueSnackbar('Пополнение отправлено', { variant: 'success' })
       } else {
-        await accountApi.withdraw(accountId, { amount: parsedAmount })
+        await withdrawFromAccount(accountId, { amount: parsedAmount })
         enqueueSnackbar('Снятие отправлено', { variant: 'success' })
       }
       setModal(null)
@@ -137,7 +130,7 @@ export function AccountDetailPage() {
   const handleCloseAccount = async () => {
     setClosing(true)
     try {
-      await accountApi.closeAccount(accountId)
+      await closeAccountUseCase(accountId)
       enqueueSnackbar('Счёт закрыт', { variant: 'success' })
       navigate(-1)
     } catch (err) {

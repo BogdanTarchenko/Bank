@@ -19,15 +19,13 @@ import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { DataTable } from '@/shared/ui/DataTable'
 import { MoneyDisplay } from '@/shared/ui/MoneyDisplay'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
-import { userApi } from '@/api/userApi'
-import { accountApi } from '@/api/accountApi'
-import { creditApi } from '@/api/creditApi'
+import { fetchUserProfile, toggleUserBlock, updateUserRoles } from '@/usecases/userUseCases'
 import { formatDate } from '@/shared/utils/format'
 import { RoleLabel, CreditGradeLabel, CurrencyLabel } from '@/entities/common'
 import type { UserResponse } from '@/entities/user'
 import type { AccountResponse } from '@/entities/account'
 import type { CreditRatingResponse } from '@/entities/credit'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function UserDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -51,17 +49,12 @@ export function UserDetailPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [userData, accsData, ratingData, roles] = await Promise.all([
-        userApi.getUser(userId, 'employee'),
-        accountApi.getAccounts(userId, 'employee'),
-        creditApi.getCreditRating(userId, 'employee').catch(() => null),
-        userApi.getAvailableRoles().catch(() => []),
-      ])
-      setUser(userData)
-      setAccounts(accsData)
-      setRating(ratingData)
-      setAvailableRoles(roles)
-      setSelectedRoles(userData.roles)
+      const profile = await fetchUserProfile(userId)
+      setUser(profile.user)
+      setAccounts(profile.accounts)
+      setRating(profile.rating)
+      setAvailableRoles(profile.availableRoles)
+      setSelectedRoles(profile.user.roles)
     } catch (err) {
       if (err instanceof ApiError) {
         enqueueSnackbar(err.message, { variant: 'error' })
@@ -82,7 +75,7 @@ export function UserDetailPage() {
     }
     setSavingRoles(true)
     try {
-      const updated = await userApi.updateUserRoles(userId, selectedRoles)
+      const updated = await updateUserRoles(userId, selectedRoles)
       setUser(updated)
       setSelectedRoles(updated.roles)
       enqueueSnackbar('Роли обновлены', { variant: 'success' })
@@ -99,13 +92,8 @@ export function UserDetailPage() {
     if (!user) return
     setBlocking(true)
     try {
-      if (user.blocked) {
-        await userApi.unblockUser(userId)
-        enqueueSnackbar('Пользователь разблокирован', { variant: 'success' })
-      } else {
-        await userApi.blockUser(userId)
-        enqueueSnackbar('Пользователь заблокирован', { variant: 'success' })
-      }
+      await toggleUserBlock(userId, user.blocked)
+      enqueueSnackbar(user.blocked ? 'Пользователь разблокирован' : 'Пользователь заблокирован', { variant: 'success' })
       setBlockDialog(false)
       await fetchData()
     } catch (err) {

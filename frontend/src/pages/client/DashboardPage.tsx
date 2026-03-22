@@ -23,11 +23,11 @@ import { PageLayout } from '@/shared/ui/PageLayout'
 import { MoneyDisplay } from '@/shared/ui/MoneyDisplay'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
-import { accountApi } from '@/api/accountApi'
+import { fetchClientAccounts, createAccount as createAccountUseCase } from '@/usecases/accountUseCases'
 import { useSettingsStore } from '@/store/settingsStore'
 import { Currency, CurrencyLabel } from '@/entities/common'
 import type { AccountResponse } from '@/entities/account'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function ClientDashboardPage() {
   const navigate = useNavigate()
@@ -41,7 +41,7 @@ export function ClientDashboardPage() {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const data = await accountApi.getAccounts()
+      const data = await fetchClientAccounts()
       setAccounts(data)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -59,7 +59,7 @@ export function ClientDashboardPage() {
   const handleCreateAccount = async () => {
     setCreating(true)
     try {
-      await accountApi.createAccount({ currency: newCurrency })
+      await createAccountUseCase({ currency: newCurrency })
       enqueueSnackbar('Счёт успешно создан', { variant: 'success' })
       setOpenDialog(false)
       await fetchAccounts()

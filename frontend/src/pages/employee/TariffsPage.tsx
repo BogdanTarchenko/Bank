@@ -15,10 +15,10 @@ import { useSnackbar } from 'notistack'
 import { PageLayout } from '@/shared/ui/PageLayout'
 import { DataTable } from '@/shared/ui/DataTable'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
-import { creditApi } from '@/api/creditApi'
+import { fetchTariffs as fetchTariffsUseCase, createTariff as createTariffUseCase } from '@/usecases/creditUseCases'
 import { formatDate } from '@/shared/utils/format'
 import type { TariffResponse } from '@/entities/credit'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function TariffsPage() {
   const { enqueueSnackbar } = useSnackbar()
@@ -37,7 +37,7 @@ export function TariffsPage() {
 
   const fetchTariffs = useCallback(async () => {
     try {
-      const data = await creditApi.getTariffs('employee')
+      const data = await fetchTariffsUseCase('employee')
       setTariffs(data)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -59,7 +59,7 @@ export function TariffsPage() {
     }
     setCreating(true)
     try {
-      await creditApi.createTariff({
+      await createTariffUseCase({
         name: form.name,
         interestRate: parseFloat(form.interestRate),
         minAmount: form.minAmount ? parseFloat(form.minAmount) : undefined,

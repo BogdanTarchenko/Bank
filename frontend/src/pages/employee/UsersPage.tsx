@@ -21,12 +21,12 @@ import { useSnackbar } from 'notistack'
 import { PageLayout } from '@/shared/ui/PageLayout'
 import { DataTable } from '@/shared/ui/DataTable'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
-import { userApi } from '@/api/userApi'
-import { authApi } from '@/api/authApi'
+import { fetchUsers as fetchUsersUseCase } from '@/usecases/userUseCases'
+import { registerUser } from '@/usecases/authUseCases'
 import { formatDate } from '@/shared/utils/format'
 import { Role, RoleLabel } from '@/entities/common'
 import type { UserResponse } from '@/entities/user'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function UsersPage() {
   const navigate = useNavigate()
@@ -47,7 +47,7 @@ export function UsersPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const data = await userApi.getUsers('employee')
+      const data = await fetchUsersUseCase()
       setUsers(data)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -69,7 +69,7 @@ export function UsersPage() {
     }
     setCreating(true)
     try {
-      await authApi.register({
+      await registerUser({
         email: form.email,
         password: form.password,
         firstName: form.firstName,

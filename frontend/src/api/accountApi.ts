@@ -5,7 +5,6 @@ import type { AccountResponse, CreateAccountRequest, MoneyOperationRequest } fro
 export const accountApi = {
   async getAccounts(userId?: number, portal: 'client' | 'employee' = 'client'): Promise<AccountResponse[]> {
     const base = endpoints[portal].accounts
-    // Client BFF определяет userId из JWT, employee — нужен query param
     const url = portal === 'employee' && userId ? `${base}?userId=${userId}` : base
     const { data } = await httpClient.get<AccountResponse[]>(url)
     return data
@@ -33,8 +32,4 @@ export const accountApi = {
     await httpClient.post(endpoints.client.withdraw(id), request)
   },
 
-  async getMasterAccount(portal: 'client' | 'employee' = 'client'): Promise<AccountResponse[]> {
-    const { data } = await httpClient.get<AccountResponse[]>(endpoints[portal].masterAccount)
-    return data
-  },
 }

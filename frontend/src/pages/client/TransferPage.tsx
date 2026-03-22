@@ -14,11 +14,11 @@ import {
 import { useSnackbar } from 'notistack'
 import { PageLayout } from '@/shared/ui/PageLayout'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
-import { accountApi } from '@/api/accountApi'
-import { transferApi } from '@/api/transferApi'
+import { fetchClientAccounts } from '@/usecases/accountUseCases'
+import { executeTransfer } from '@/usecases/transferUseCases'
 import { formatMoney } from '@/shared/utils/format'
 import type { AccountResponse } from '@/entities/account'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function TransferPage() {
   const { enqueueSnackbar } = useSnackbar()
@@ -32,7 +32,7 @@ export function TransferPage() {
   const fetchAccounts = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await accountApi.getAccounts()
+      const data = await fetchClientAccounts()
       setAccounts(data.filter((a) => !a.isClosed))
     } catch (err) {
       if (err instanceof ApiError) {
@@ -67,7 +67,7 @@ export function TransferPage() {
 
     setSubmitting(true)
     try {
-      await transferApi.transfer({
+      await executeTransfer({
         fromAccountId: fromAccountId,
         toAccountId: toId,
         amount: parsedAmount,

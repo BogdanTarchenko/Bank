@@ -5,11 +5,11 @@ import { useSnackbar } from 'notistack'
 import { PageLayout } from '@/shared/ui/PageLayout'
 import { DataTable } from '@/shared/ui/DataTable'
 import { MoneyDisplay } from '@/shared/ui/MoneyDisplay'
-import { accountApi } from '@/api/accountApi'
+import { fetchAllAccounts } from '@/usecases/accountUseCases'
 import { formatDate } from '@/shared/utils/format'
 import type { AccountResponse } from '@/entities/account'
 import { CurrencyLabel } from '@/entities/common'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function EmployeeDashboardPage() {
   const navigate = useNavigate()
@@ -20,7 +20,7 @@ export function EmployeeDashboardPage() {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const data = await accountApi.getAccounts(undefined, 'employee')
+      const data = await fetchAllAccounts()
       setAccounts(data)
     } catch (err) {
       if (err instanceof ApiError) {

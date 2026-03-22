@@ -11,8 +11,8 @@ import {
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import { useSnackbar } from 'notistack'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
-import { authApi } from '@/api/authApi'
-import { ApiError } from '@/network/httpClient'
+import { registerUser } from '@/usecases/authUseCases'
+import { ApiError } from '@/api'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -44,7 +44,7 @@ export function RegisterPage() {
 
     setLoading(true)
     try {
-      await authApi.register({
+      await registerUser({
         email: form.email,
         password: form.password,
         firstName: form.firstName,

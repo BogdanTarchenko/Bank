@@ -9,11 +9,11 @@ import {
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 import { PageLayout } from '@/shared/ui/PageLayout'
-import { settingsApi } from '@/api/settingsApi'
+import { updateTheme, fetchEmployeeSettings } from '@/usecases/settingsUseCases'
 import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { Theme } from '@/entities/common'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function EmployeeSettingsPage() {
   const { enqueueSnackbar } = useSnackbar()
@@ -24,8 +24,9 @@ export function EmployeeSettingsPage() {
   const fetchSettings = useCallback(async () => {
     if (!user) return
     try {
-      await settingsApi.getSettings(user.userId, 'employee')
+      await fetchEmployeeSettings(user.userId)
     } catch {
+      // ignore
     } finally {
       setLoading(false)
     }
@@ -39,7 +40,7 @@ export function EmployeeSettingsPage() {
     if (!user) return
     setTheme(newTheme)
     try {
-      await settingsApi.updateSettings(user.userId, { theme: newTheme }, 'employee')
+      await updateTheme(user.userId, newTheme, 'employee')
       enqueueSnackbar('Тема изменена', { variant: 'success' })
     } catch (err) {
       if (err instanceof ApiError) {

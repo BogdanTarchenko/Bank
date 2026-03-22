@@ -14,12 +14,12 @@ import {
 import { useSnackbar } from 'notistack'
 import { PageLayout } from '@/shared/ui/PageLayout'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
-import { accountApi } from '@/api/accountApi'
-import { creditApi } from '@/api/creditApi'
+import { fetchClientAccounts } from '@/usecases/accountUseCases'
+import { fetchTariffs, createCredit as createCreditUseCase } from '@/usecases/creditUseCases'
 import { formatMoney } from '@/shared/utils/format'
 import type { AccountResponse } from '@/entities/account'
 import type { TariffResponse } from '@/entities/credit'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function NewCreditPage() {
   const navigate = useNavigate()
@@ -36,8 +36,8 @@ export function NewCreditPage() {
   const fetchData = useCallback(async () => {
     try {
       const [accs, tarrs] = await Promise.all([
-        accountApi.getAccounts(),
-        creditApi.getTariffs(),
+        fetchClientAccounts(),
+        fetchTariffs(),
       ])
       setAccounts(accs.filter((a) => !a.isClosed))
       setTariffs(tarrs.filter((t) => t.active))
@@ -64,7 +64,7 @@ export function NewCreditPage() {
 
     setSubmitting(true)
     try {
-      await creditApi.createCredit({
+      await createCreditUseCase({
         accountId: accountId,
         tariffId: tariffId,
         amount: parseFloat(amount),

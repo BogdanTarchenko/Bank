@@ -14,14 +14,13 @@ import {
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 import { PageLayout } from '@/shared/ui/PageLayout'
-import { settingsApi } from '@/api/settingsApi'
-import { accountApi } from '@/api/accountApi'
+import { fetchClientSettings, updateTheme, updateHiddenAccounts } from '@/usecases/settingsUseCases'
 import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { Theme } from '@/entities/common'
 import { formatMoney } from '@/shared/utils/format'
 import type { AccountResponse } from '@/entities/account'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function ClientSettingsPage() {
   const { enqueueSnackbar } = useSnackbar()
@@ -33,13 +32,10 @@ export function ClientSettingsPage() {
   const fetchData = useCallback(async () => {
     if (!user) return
     try {
-      const [accs, settings] = await Promise.all([
-        accountApi.getAccounts(user.userId),
-        settingsApi.getSettings(user.userId).catch(() => null),
-      ])
-      setAccounts(accs.filter((a) => !a.isClosed))
-      if (settings) {
-        setHiddenAccounts(settings.hiddenAccounts)
+      const data = await fetchClientSettings(user.userId)
+      setAccounts(data.accounts)
+      if (data.settings) {
+        setHiddenAccounts(data.settings.hiddenAccounts)
       }
     } catch (err) {
       if (err instanceof ApiError) {
@@ -58,7 +54,7 @@ export function ClientSettingsPage() {
     if (!user) return
     setTheme(newTheme)
     try {
-      await settingsApi.updateSettings(user.userId, { theme: newTheme })
+      await updateTheme(user.userId, newTheme)
       enqueueSnackbar('Тема изменена', { variant: 'success' })
     } catch (err) {
       if (err instanceof ApiError) {
@@ -74,7 +70,7 @@ export function ClientSettingsPage() {
       ? hiddenAccounts.filter((id) => id !== accountId)
       : [...hiddenAccounts, accountId]
     try {
-      await settingsApi.updateSettings(user.userId, { hiddenAccounts: newHidden })
+      await updateHiddenAccounts(user.userId, newHidden)
     } catch (err) {
       if (err instanceof ApiError) {
         enqueueSnackbar(err.message, { variant: 'error' })

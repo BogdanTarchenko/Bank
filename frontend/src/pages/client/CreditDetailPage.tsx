@@ -19,11 +19,11 @@ import { MoneyDisplay } from '@/shared/ui/MoneyDisplay'
 import { StatusChip } from '@/shared/ui/StatusChip'
 import { DataTable } from '@/shared/ui/DataTable'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
-import { creditApi } from '@/api/creditApi'
+import { fetchCreditDetail, repayCredit as repayCreditUseCase } from '@/usecases/creditUseCases'
 import { formatDate } from '@/shared/utils/format'
 import { Currency, CreditStatus } from '@/entities/common'
 import type { CreditResponse, PaymentResponse } from '@/entities/credit'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function CreditDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -39,10 +39,7 @@ export function CreditDetailPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [creditData, paymentsData] = await Promise.all([
-        creditApi.getCredit(creditId),
-        creditApi.getPayments(creditId),
-      ])
+      const { credit: creditData, payments: paymentsData } = await fetchCreditDetail(creditId)
       setCredit(creditData)
       setPayments(paymentsData)
     } catch (err) {
@@ -67,7 +64,7 @@ export function CreditDetailPage() {
 
     setRepaying(true)
     try {
-      await creditApi.repayCredit(creditId, { amount: parsed })
+      await repayCreditUseCase(creditId, { amount: parsed })
       enqueueSnackbar('Платёж по кредиту выполнен', { variant: 'success' })
       setRepayOpen(false)
       setRepayAmount('')

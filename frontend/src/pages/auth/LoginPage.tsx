@@ -1,11 +1,11 @@
 import { Box, Button, Typography, Paper, Link as MuiLink } from '@mui/material'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import { Link } from 'react-router-dom'
-import { authApi } from '@/api/authApi'
+import { startLogin } from '@/usecases/authUseCases'
 
 export function LoginPage() {
   const handleLogin = () => {
-    authApi.startAuthFlow()
+    startLogin()
   }
 
   return (

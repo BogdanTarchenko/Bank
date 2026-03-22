@@ -16,13 +16,13 @@ import { PageLayout } from '@/shared/ui/PageLayout'
 import { MoneyDisplay } from '@/shared/ui/MoneyDisplay'
 import { StatusChip } from '@/shared/ui/StatusChip'
 import { EmptyState } from '@/shared/ui/EmptyState'
-import { creditApi } from '@/api/creditApi'
 import { useAuthStore } from '@/store/authStore'
+import { fetchClientCreditsWithRating } from '@/usecases/creditUseCases'
 import { formatDateShort } from '@/shared/utils/format'
 import type { CreditResponse } from '@/entities/credit'
 import type { CreditRatingResponse } from '@/entities/credit'
 import { Currency, CreditGradeLabel } from '@/entities/common'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function CreditsPage() {
   const navigate = useNavigate()
@@ -34,10 +34,7 @@ export function CreditsPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [creditsData, ratingData] = await Promise.all([
-        creditApi.getCredits(),
-        user ? creditApi.getCreditRating(user.userId) : Promise.resolve(null),
-      ])
+      const { credits: creditsData, rating: ratingData } = await fetchClientCreditsWithRating(user?.userId)
       setCredits(creditsData)
       setRating(ratingData)
     } catch (err) {

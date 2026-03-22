@@ -15,13 +15,13 @@ import { MoneyDisplay } from '@/shared/ui/MoneyDisplay'
 import { StatusChip } from '@/shared/ui/StatusChip'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { DataTable } from '@/shared/ui/DataTable'
-import { creditApi } from '@/api/creditApi'
-import { userApi } from '@/api/userApi'
+import { fetchUserCreditsWithRating, fetchCreditPayments } from '@/usecases/creditUseCases'
+import { fetchUserById } from '@/usecases/userUseCases'
 import { formatDateShort, formatDate } from '@/shared/utils/format'
 import { Currency, CreditGradeLabel } from '@/entities/common'
 import type { CreditResponse, PaymentResponse, CreditRatingResponse } from '@/entities/credit'
 import type { UserResponse } from '@/entities/user'
-import { ApiError } from '@/network/httpClient'
+import { ApiError } from '@/api'
 
 export function ClientCreditsPage() {
   const { userId } = useParams<{ userId: string }>()
@@ -37,10 +37,9 @@ export function ClientCreditsPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [userData, creditsData, ratingData] = await Promise.all([
-        userApi.getUser(uid, 'employee'),
-        creditApi.getCredits(uid, 'employee'),
-        creditApi.getCreditRating(uid, 'employee').catch(() => null),
+      const [userData, { credits: creditsData, rating: ratingData }] = await Promise.all([
+        fetchUserById(uid),
+        fetchUserCreditsWithRating(uid),
       ])
       setUser(userData)
       setCredits(creditsData)
@@ -61,7 +60,7 @@ export function ClientCreditsPage() {
   const handleSelectCredit = async (credit: CreditResponse) => {
     setSelectedCredit(credit)
     try {
-      const data = await creditApi.getPayments(credit.id, 'employee')
+      const data = await fetchCreditPayments(credit.id, 'employee')
       setPayments(data)
     } catch (err) {
       if (err instanceof ApiError) {
