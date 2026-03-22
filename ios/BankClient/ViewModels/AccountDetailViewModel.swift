@@ -31,7 +31,7 @@ final class AccountDetailViewModel {
         } catch is CancellationError {
             // Не меняем состояние при отмене
         } catch {
-            actionError = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            actionError = error.userMessage
         }
         isLoadingOperations = false
     }
@@ -60,7 +60,7 @@ final class AccountDetailViewModel {
             amountText = ""
             await refreshAccount()
         } catch {
-            actionError = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            actionError = error.userMessage
         }
         isActionLoading = false
     }
@@ -75,7 +75,7 @@ final class AccountDetailViewModel {
             amountText = ""
             await refreshAccount()
         } catch {
-            actionError = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            actionError = error.userMessage
         }
         isActionLoading = false
     }
@@ -87,7 +87,7 @@ final class AccountDetailViewModel {
             try await useCase.closeAccount(id: account.id)
             actionSuccess = "Счёт закрыт"
         } catch {
-            actionError = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            actionError = error.userMessage
         }
         isActionLoading = false
     }

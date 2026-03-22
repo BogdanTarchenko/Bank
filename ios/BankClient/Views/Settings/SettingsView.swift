@@ -30,7 +30,7 @@ struct SettingsView: View {
                     appState.applySettings(settings)
                 }
                 do {
-                    let allAccounts = try await container.accountUseCase.getAccounts(userId: userId)
+                    let allAccounts = try await container.accountUseCase.getAccounts()
                     accounts = allAccounts.filter { !$0.isClosed && $0.accountType == .PERSONAL }
                 } catch {
                     // Секция видимости счетов не покажется

@@ -21,7 +21,7 @@ final class EmployeeSettingsViewModel {
         do {
             settings = try await useCase.getSettings(userId: userId)
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
         isLoading = false
     }
@@ -32,7 +32,7 @@ final class EmployeeSettingsViewModel {
         do {
             settings = try await useCase.updateSettings(userId: userId, request: UpdateSettingsRequest(theme: newTheme))
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
     }
 }

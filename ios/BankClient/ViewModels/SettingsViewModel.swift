@@ -23,7 +23,7 @@ final class SettingsViewModel {
         } catch is CancellationError {
             // Не меняем состояние при отмене
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
         isLoading = false
     }
@@ -34,7 +34,7 @@ final class SettingsViewModel {
         do {
             settings = try await useCase.updateSettings(userId: userId, request: UpdateSettingsRequest(theme: newTheme))
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
     }
 
@@ -45,7 +45,7 @@ final class SettingsViewModel {
                 request: UpdateSettingsRequest(hiddenAccounts: Array(hiddenAccounts))
             )
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
     }
 }

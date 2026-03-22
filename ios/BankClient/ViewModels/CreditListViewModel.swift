@@ -17,11 +17,11 @@ final class CreditListViewModel {
         let previousState = state
         if case .loaded = state {} else { state = .loading }
         do {
-            state = .loaded(try await useCase.getCredits(userId: userId))
+            state = .loaded(try await useCase.getCredits())
         } catch is CancellationError {
             state = previousState
         } catch {
-            state = .error((error as? NetworkError)?.localizedDescription ?? error.localizedDescription)
+            state = .error(error.userMessage)
         }
     }
 }

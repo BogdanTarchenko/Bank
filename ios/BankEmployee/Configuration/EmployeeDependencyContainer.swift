@@ -8,6 +8,7 @@ final class EmployeeDependencyContainer: ObservableObject {
 
     lazy var userUseCase = UserManagementUseCase(client: httpClient)
     lazy var accountUseCase = AccountViewUseCase(client: httpClient)
+    lazy var creditUseCase = EmployeeCreditUseCase(client: httpClient)
     lazy var tariffUseCase = TariffManagementUseCase(client: httpClient)
     lazy var ratingUseCase = EmployeeCreditRatingUseCase(client: httpClient)
     lazy var settingsUseCase = EmployeeSettingsUseCase(client: httpClient)

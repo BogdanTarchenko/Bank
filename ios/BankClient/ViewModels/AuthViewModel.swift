@@ -30,7 +30,7 @@ final class AuthViewModel {
         do {
             try await useCase.login()
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
         isLoading = false
     }
@@ -45,7 +45,7 @@ final class AuthViewModel {
             )
             registrationSuccess = true
         } catch {
-            errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
         isLoading = false
     }

@@ -54,7 +54,7 @@ public class UserController {
 
     @PatchMapping("/{id}/roles")
     public UserResponse updateUserRoles(@PathVariable Long id, @Valid @RequestBody UpdateRolesRequest request) {
-        return userService.updateUserRoles(id, request.roles());
+        return userService.updateRoles(id, request.roles());
     }
 
     @PatchMapping("/{id}/block")

@@ -8,16 +8,16 @@ final class AccountUseCase: Sendable {
         self.client = client
     }
 
-    func getAccounts(userId: Int64) async throws -> [Account] {
-        try await client.request(AccountEndpoint.getByUserId(userId))
+    func getAccounts() async throws -> [Account] {
+        try await client.request(AccountEndpoint.getAll)
     }
 
     func getAccount(id: Int64) async throws -> Account {
         try await client.request(AccountEndpoint.getById(id))
     }
 
-    func createAccount(userId: Int64, currency: Currency) async throws -> Account {
-        try await client.request(AccountEndpoint.create(CreateAccountRequest(userId: userId, currency: currency)))
+    func createAccount(currency: Currency) async throws -> Account {
+        try await client.request(AccountEndpoint.create(CreateAccountRequest(currency: currency)))
     }
 
     func closeAccount(id: Int64) async throws {

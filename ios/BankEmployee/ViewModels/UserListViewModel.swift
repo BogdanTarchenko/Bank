@@ -27,7 +27,7 @@ final class UserListViewModel {
         do {
             state = .loaded(try await useCase.getAllUsers())
         } catch {
-            state = .error((error as? NetworkError)?.localizedDescription ?? error.localizedDescription)
+            state = .error(error.userMessage)
         }
     }
 }

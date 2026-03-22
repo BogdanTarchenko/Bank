@@ -1,10 +1,13 @@
 import SwiftUI
-import BankShared
 
-struct PaymentRow: View {
+public struct PaymentRow: View {
     let payment: Payment
 
-    var body: some View {
+    public init(payment: Payment) {
+        self.payment = payment
+    }
+
+    public var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(payment.amount.formattedPlain())

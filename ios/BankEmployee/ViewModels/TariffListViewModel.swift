@@ -32,7 +32,7 @@ final class TariffListViewModel {
         do {
             state = .loaded(try await useCase.getTariffs())
         } catch {
-            state = .error((error as? NetworkError)?.localizedDescription ?? error.localizedDescription)
+            state = .error(error.userMessage)
         }
     }
 
@@ -52,7 +52,7 @@ final class TariffListViewModel {
             resetForm()
             await load()
         } catch {
-            createError = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
+            createError = error.userMessage
         }
         isCreating = false
     }
