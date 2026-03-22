@@ -11,6 +11,8 @@ public record CreateTariffRequest(
         @NotBlank(message = "Название тарифа обязательно")
         String name,
 
+        String currency,
+
         @NotNull(message = "Процентная ставка обязательна")
         @DecimalMin(value = "0.01", message = "Ставка должна быть положительной")
         BigDecimal interestRate,

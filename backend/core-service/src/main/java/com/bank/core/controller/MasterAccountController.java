@@ -34,8 +34,7 @@ public class MasterAccountController {
     @PostMapping("/transfer")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void transferFromMasterAccount(@Valid @RequestBody MasterAccountTransferRequest request) {
-        AccountResponse targetAccount = accountService.getAccountById(request.targetAccountId());
-        AccountResponse masterAccount = accountService.getMasterAccount(targetAccount.currency());
+        AccountResponse masterAccount = accountService.getMasterAccount(request.sourceCurrency());
 
         operationService.requestTransfer(new TransferRequest(
                 masterAccount.id(),

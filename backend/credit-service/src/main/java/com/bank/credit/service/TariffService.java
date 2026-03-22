@@ -21,8 +21,12 @@ public class TariffService {
 
     @Transactional
     public TariffResponse createTariff(CreateTariffRequest request) {
+        String currency = request.currency() != null && !request.currency().isBlank()
+                ? request.currency().toUpperCase()
+                : "RUB";
         Tariff tariff = Tariff.builder()
                 .name(request.name())
+                .currency(currency)
                 .interestRate(request.interestRate())
                 .minAmount(request.minAmount() != null ? request.minAmount() : new BigDecimal("1000"))
                 .maxAmount(request.maxAmount() != null ? request.maxAmount() : new BigDecimal("10000000"))
