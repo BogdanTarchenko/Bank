@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public record TariffResponse(
         Long id,
         String name,
+        String currency,
         BigDecimal interestRate,
         BigDecimal minAmount,
         BigDecimal maxAmount,

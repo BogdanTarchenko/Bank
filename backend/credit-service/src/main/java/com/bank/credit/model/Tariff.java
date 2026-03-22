@@ -22,6 +22,9 @@ public class Tariff {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false, length = 3)
+    private String currency;
+
     @Column(name = "interest_rate", nullable = false)
     private BigDecimal interestRate;
 

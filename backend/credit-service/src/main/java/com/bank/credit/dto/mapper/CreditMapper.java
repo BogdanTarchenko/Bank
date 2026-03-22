@@ -17,6 +17,7 @@ public final class CreditMapper {
         return new TariffResponse(
                 tariff.getId(),
                 tariff.getName(),
+                tariff.getCurrency(),
                 tariff.getInterestRate(),
                 tariff.getMinAmount(),
                 tariff.getMaxAmount(),
