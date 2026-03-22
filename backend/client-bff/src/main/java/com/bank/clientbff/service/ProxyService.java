@@ -38,6 +38,16 @@ public class ProxyService {
             return ResponseEntity.badRequest().body("{\"error\":\"Неизвестный сервис: " + serviceName + "\"}");
         }
 
+        if ("core".equals(serviceName) && (path.startsWith("/accounts") || path.startsWith("/transfers"))) {
+            return ResponseEntity.status(403)
+                    .body("{\"error\":\"Используйте /api/v1/accounts и /api/v1/transfers\"}");
+        }
+
+        if ("credit".equals(serviceName) && path.startsWith("/credits")) {
+            return ResponseEntity.status(403)
+                    .body("{\"error\":\"Используйте /api/v1/credits\"}");
+        }
+
         String targetUrl = baseUrl + "/api/v1" + path;
         String queryString = request.getQueryString();
         if (queryString != null) {

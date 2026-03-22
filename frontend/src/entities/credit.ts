@@ -17,7 +17,6 @@ export interface CreditResponse {
 }
 
 export interface CreateCreditRequest {
-  userId: number
   accountId: number
   tariffId: number
   amount: number

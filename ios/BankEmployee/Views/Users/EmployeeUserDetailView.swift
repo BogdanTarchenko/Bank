@@ -52,8 +52,10 @@ struct EmployeeUserDetailView: View {
 
                     if let rating = viewModel.creditRating {
                         Section("Кредитный рейтинг") {
-                            LabeledContent("Рейтинг", value: "\(rating.score) — \(rating.grade)")
+                            LabeledContent("Рейтинг", value: "\(rating.score) — \(Self.gradeDisplayName(rating.grade))")
+                            LabeledContent("Всего кредитов", value: "\(rating.totalCredits)")
                             LabeledContent("Активных кредитов", value: "\(rating.activeCredits)")
+                            LabeledContent("Всего платежей", value: "\(rating.totalPayments)")
                             LabeledContent("Просроченных платежей", value: "\(rating.overduePayments)")
                         }
                     }
@@ -74,7 +76,7 @@ struct EmployeeUserDetailView: View {
             }
         }
         .navigationTitle(user.fullName)
-        .task {
+        .task(id: user.id) {
             if viewModel == nil {
                 viewModel = UserDetailViewModel(
                     user: user,
@@ -84,6 +86,17 @@ struct EmployeeUserDetailView: View {
                 )
             }
             await viewModel?.load()
+        }
+    }
+
+    private static func gradeDisplayName(_ grade: String) -> String {
+        switch grade.uppercased() {
+        case "EXCELLENT": "Отличный"
+        case "GOOD": "Хороший"
+        case "FAIR": "Средний"
+        case "POOR": "Низкий"
+        case "BAD": "Плохой"
+        default: grade
         }
     }
 }

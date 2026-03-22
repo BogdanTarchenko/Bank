@@ -8,7 +8,7 @@ const statusConfig: Record<string, { label: string; color: ChipProps['color'] }>
   PENDING: { label: 'Ожидает', color: 'warning' },
   PAID: { label: 'Оплачен', color: 'success' },
   DEPOSIT: { label: 'Пополнение', color: 'success' },
-  WITHDRAW: { label: 'Снятие', color: 'warning' },
+  WITHDRAWAL: { label: 'Снятие', color: 'warning' },
   TRANSFER_IN: { label: 'Входящий', color: 'info' },
   TRANSFER_OUT: { label: 'Исходящий', color: 'secondary' },
 }

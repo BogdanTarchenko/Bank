@@ -7,6 +7,7 @@ import com.bank.user.model.Role;
 import com.bank.user.dto.mapper.UserMapper;
 import com.bank.user.exception.EmailAlreadyExistsException;
 import com.bank.user.exception.UserNotFoundException;
+import com.bank.user.model.Role;
 import com.bank.user.model.User;
 import com.bank.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

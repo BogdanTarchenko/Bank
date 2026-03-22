@@ -24,8 +24,15 @@ final class CreditApplicationViewModel {
         self.userId = userId
     }
 
+    var termRange: ClosedRange<Int> {
+        guard let tariff = selectedTariff else { return 1...365 }
+        let min = tariff.minTermDays ?? 1
+        let max = tariff.maxTermDays ?? 365
+        return min...max
+    }
+
     var isValid: Bool {
-        selectedTariff != nil && selectedAccount != nil && Validator.isValidAmount(amountText) && termDays > 0
+        selectedTariff != nil && selectedAccount != nil && Validator.isValidAmount(amountText) && termRange.contains(termDays)
     }
 
     func load() async {
@@ -37,6 +44,9 @@ final class CreditApplicationViewModel {
             accounts = try await a.filter { !$0.isClosed && $0.accountType == .PERSONAL }
             selectedTariff = tariffs.first
             selectedAccount = accounts.first
+            if let tariff = selectedTariff {
+                termDays = tariff.minTermDays ?? 30
+            }
         } catch {
             errorMessage = (error as? NetworkError)?.localizedDescription ?? error.localizedDescription
         }

@@ -21,7 +21,35 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
     .replace(/=/g, '')
 }
 
+function parseJwt(token: string): Record<string, unknown> {
+  const base64Url = token.split('.')[1]
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split('')
+      .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+      .join(''),
+  )
+  return JSON.parse(jsonPayload) as Record<string, unknown>
+}
+
+function normalizeRoles(roles: string[]): string[] {
+  return roles.map((r) => (r === 'USER' ? 'CLIENT' : r))
+}
+
+function extractUserInfo(accessToken: string): UserInfo {
+  const claims = parseJwt(accessToken)
+  const rawRoles = (claims.roles as string[]) ?? (claims.authorities as string[]) ?? []
+  return {
+    sub: (claims.sub as string) ?? '',
+    email: (claims.sub as string) ?? (claims.email as string) ?? '',
+    roles: normalizeRoles(rawRoles),
+    userId: (claims.userId as number) ?? 0,
+  }
+}
+
 const CLIENT_ID = 'client-bff'
+const CLIENT_SECRET = 'client-bff-secret'
 const REDIRECT_URI = `${window.location.origin}/callback`
 const SCOPES = 'openid profile accounts.read accounts.write credits.read credits.write'
 
@@ -49,10 +77,10 @@ export const authApi = {
       code_challenge_method: 'S256',
     })
 
-    window.location.href = `${endpoints.auth.authorize}?${params.toString()}`
+    window.location.href = `http://localhost:8081/oauth2/authorize?${params.toString()}`
   },
 
-  async exchangeCode(code: string, state: string): Promise<TokenResponse> {
+  async exchangeCode(code: string, state: string): Promise<{ tokenResponse: TokenResponse; userInfo: UserInfo }> {
     const savedState = sessionStorage.getItem('oauth_state')
     if (state !== savedState) {
       throw new Error('Invalid OAuth state')
@@ -71,18 +99,20 @@ export const authApi = {
       code_verifier: codeVerifier,
     })
 
+    const basicAuth = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)
+
     const { data } = await httpClient.post<TokenResponse>(endpoints.auth.token, params.toString(), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${basicAuth}`,
+      },
     })
 
     sessionStorage.removeItem('pkce_code_verifier')
     sessionStorage.removeItem('oauth_state')
 
-    return data
-  },
+    const userInfo = extractUserInfo(data.access_token)
 
-  async getUserInfo(): Promise<UserInfo> {
-    const { data } = await httpClient.get<UserInfo>(endpoints.auth.userinfo)
-    return data
+    return { tokenResponse: data, userInfo }
   },
 }

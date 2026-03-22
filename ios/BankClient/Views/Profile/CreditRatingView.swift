@@ -8,8 +8,8 @@ struct CreditRatingView: View {
         List {
             Section {
                 VStack(spacing: 12) {
-                    Text(rating.grade)
-                        .font(.system(size: 64, weight: .bold))
+                    Text(gradeDisplayName)
+                        .font(.system(size: 48, weight: .bold))
                         .foregroundStyle(gradeColor)
                     Text("\(rating.score) баллов")
                         .font(.title2)
@@ -28,12 +28,25 @@ struct CreditRatingView: View {
         .navigationTitle("Кредитный рейтинг")
     }
 
+    private var gradeDisplayName: String {
+        switch rating.grade.uppercased() {
+        case "EXCELLENT": "Отличный"
+        case "GOOD": "Хороший"
+        case "FAIR": "Средний"
+        case "POOR": "Низкий"
+        case "BAD": "Плохой"
+        default: rating.grade
+        }
+    }
+
     private var gradeColor: Color {
-        switch rating.grade {
-        case "A", "A+": .green
-        case "B", "B+": .blue
-        case "C": .orange
-        default: .red
+        switch rating.grade.uppercased() {
+        case "EXCELLENT": .green
+        case "GOOD": .blue
+        case "FAIR": .orange
+        case "POOR": .red
+        case "BAD": .red
+        default: .secondary
         }
     }
 }

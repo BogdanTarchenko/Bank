@@ -3,10 +3,10 @@ import { endpoints } from '@/network/endpoints'
 import type { CreditResponse, CreateCreditRequest, RepayRequest, PaymentResponse, TariffResponse, CreateTariffRequest, CreditRatingResponse } from '@/entities/credit'
 
 export const creditApi = {
-  async getCredits(userId: number, portal: 'client' | 'employee' = 'client'): Promise<CreditResponse[]> {
-    const { data } = await httpClient.get<CreditResponse[]>(endpoints[portal].credits, {
-      params: { userId },
-    })
+  async getCredits(userId?: number, portal: 'client' | 'employee' = 'client'): Promise<CreditResponse[]> {
+    // Client BFF определяет userId из JWT, employee — нужен query param
+    const params = portal === 'employee' && userId ? { userId } : undefined
+    const { data } = await httpClient.get<CreditResponse[]>(endpoints[portal].credits, { params })
     return data
   },
 

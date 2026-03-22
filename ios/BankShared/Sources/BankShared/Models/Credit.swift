@@ -8,6 +8,7 @@ public struct Credit: Codable, Identifiable, Hashable, Sendable {
     public let tariffName: String
     public let principal: Decimal
     public let remaining: Decimal
+    public let accruedInterest: Decimal?
     public let interestRate: Decimal
     public let termDays: Int
     public let dailyPayment: Decimal

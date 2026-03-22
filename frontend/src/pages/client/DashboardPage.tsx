@@ -24,16 +24,14 @@ import { MoneyDisplay } from '@/shared/ui/MoneyDisplay'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
 import { accountApi } from '@/api/accountApi'
-import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
-import { Currency } from '@/entities/common'
+import { Currency, CurrencyLabel } from '@/entities/common'
 import type { AccountResponse } from '@/entities/account'
 import { ApiError } from '@/network/httpClient'
 
 export function ClientDashboardPage() {
   const navigate = useNavigate()
   const { enqueueSnackbar } = useSnackbar()
-  const user = useAuthStore((s) => s.user)
   const { hiddenAccounts } = useSettingsStore()
   const [accounts, setAccounts] = useState<AccountResponse[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,9 +40,8 @@ export function ClientDashboardPage() {
   const [creating, setCreating] = useState(false)
 
   const fetchAccounts = useCallback(async () => {
-    if (!user) return
     try {
-      const data = await accountApi.getAccounts(user.userId)
+      const data = await accountApi.getAccounts()
       setAccounts(data)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -53,17 +50,16 @@ export function ClientDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [user, enqueueSnackbar])
+  }, [enqueueSnackbar])
 
   useEffect(() => {
     fetchAccounts()
   }, [fetchAccounts])
 
   const handleCreateAccount = async () => {
-    if (!user) return
     setCreating(true)
     try {
-      await accountApi.createAccount({ userId: user.userId, currency: newCurrency })
+      await accountApi.createAccount({ currency: newCurrency })
       enqueueSnackbar('Счёт успешно создан', { variant: 'success' })
       setOpenDialog(false)
       await fetchAccounts()
@@ -154,7 +150,7 @@ export function ClientDashboardPage() {
               onChange={(e) => setNewCurrency(e.target.value as Currency)}
             >
               {Object.values(Currency).map((c) => (
-                <MenuItem key={c} value={c}>{c}</MenuItem>
+                <MenuItem key={c} value={c}>{CurrencyLabel[c] ?? c} ({c})</MenuItem>
               ))}
             </Select>
           </FormControl>

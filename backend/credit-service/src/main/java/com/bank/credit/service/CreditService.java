@@ -33,6 +33,13 @@ public class CreditService {
     public CreditResponse createCredit(CreateCreditRequest request) {
         Tariff tariff = tariffService.findById(request.tariffId());
 
+        String accountCurrency = coreServiceClient.getAccountCurrency(request.accountId());
+        if (!accountCurrency.equalsIgnoreCase(tariff.getCurrency())) {
+            throw new InvalidCreditAmountException(
+                    String.format("Валюта счёта (%s) не совпадает с валютой тарифа кредита (%s). Выберите счёт в валюте %s.",
+                            accountCurrency, tariff.getCurrency(), tariff.getCurrency()));
+        }
+
         if (request.amount().compareTo(tariff.getMinAmount()) < 0 ||
             request.amount().compareTo(tariff.getMaxAmount()) > 0) {
             throw new InvalidCreditAmountException(
@@ -100,8 +107,7 @@ public class CreditService {
             paymentRepository.save(payment);
         }
 
-        // Перевод денег с мастер-счёта на счёт клиента
-        coreServiceClient.transferFromMasterAccount(request.accountId(), request.amount());
+        coreServiceClient.transferFromMasterAccount(request.accountId(), request.amount(), tariff.getCurrency());
 
         return CreditMapper.toResponse(credit, BigDecimal.ZERO);
     }

@@ -33,6 +33,7 @@ public final class AuthManager: ObservableObject {
             self.email = savedEmail
         }
         self.isAuthenticated = accessToken != nil
+        print("[AUTH] init: isAuthenticated=\(isAuthenticated), userId=\(userId as Any), email=\(email as Any), hasToken=\(accessToken != nil)")
     }
 
     public func login() async throws {
@@ -86,13 +87,23 @@ public final class AuthManager: ObservableObject {
         }
 
         do {
+            print("[AUTH] handleCallback: exchanging code...")
             let tokenResponse = try await exchangeCode(code, codeVerifier: verifier)
             saveTokens(tokenResponse)
-            try await fetchUserInfo()
+            print("[AUTH] handleCallback: tokens saved, isAuthenticated=\(isAuthenticated)")
+            // fetchUserInfo не должен блокировать логин — userId можно получить позже
+            do {
+                try await fetchUserInfo()
+                print("[AUTH] handleCallback: fetchUserInfo done, userId=\(userId as Any), email=\(email as Any)")
+            } catch {
+                print("[AUTH] handleCallback: fetchUserInfo error: \(error)")
+                // Не критично: userId будет получен через resolveUserIdIfNeeded
+            }
             showLoginWebView = false
             loginContinuation?.resume()
             loginContinuation = nil
         } catch {
+            print("[AUTH] handleCallback: exchangeCode error: \(error)")
             showLoginWebView = false
             loginContinuation?.resume(throwing: error)
             loginContinuation = nil
@@ -130,14 +141,29 @@ public final class AuthManager: ObservableObject {
 
     public func fetchUserInfo() async throws {
         guard let token = accessToken,
-              let url = URL(string: "\(config.authBaseURL)/userinfo") else { return }
+              let url = URL(string: "\(config.authBaseURL)/userinfo") else {
+            print("[AUTH] fetchUserInfo: no token or invalid URL")
+            return
+        }
+        print("[AUTH] fetchUserInfo: calling \(url)")
         var request = URLRequest(url: url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else { return }
+        guard let httpResponse = response as? HTTPURLResponse else { return }
+        print("[AUTH] fetchUserInfo: status=\(httpResponse.statusCode)")
+        if httpResponse.statusCode == 401 {
+            // Токен невалиден (например, auth-service перегенерировал ключи) — разлогиниваем
+            print("[AUTH] fetchUserInfo: 401 → logout")
+            logout()
+            return
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            print("[AUTH] fetchUserInfo: non-200 status, body=\(String(data: data, encoding: .utf8) ?? "nil")")
+            return
+        }
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let sub = json["sub"] as? String {
+            print("[AUTH] fetchUserInfo: sub=\(sub)")
             // sub is email, not numeric ID
             email = sub
             keychain.save(sub, for: "email")
@@ -146,24 +172,59 @@ public final class AuthManager: ObservableObject {
             if let id = Int64(sub) {
                 userId = id
                 keychain.save("\(id)", for: "user_id")
+                print("[AUTH] fetchUserInfo: numeric userId=\(id)")
             } else if let resolver = userIdResolver {
+                print("[AUTH] fetchUserInfo: resolving userId for email=\(sub)...")
                 // Resolve email → numeric userId via user-service
-                let id = try await resolver(sub)
-                userId = id
-                keychain.save("\(id)", for: "user_id")
+                do {
+                    let id = try await resolver(sub)
+                    userId = id
+                    keychain.save("\(id)", for: "user_id")
+                    print("[AUTH] fetchUserInfo: resolved userId=\(id)")
+                } catch {
+                    print("[AUTH] fetchUserInfo: resolver error: \(error)")
+                    throw error
+                }
+            } else {
+                print("[AUTH] fetchUserInfo: no resolver set, userId stays nil")
             }
+        } else {
+            print("[AUTH] fetchUserInfo: failed to parse JSON, body=\(String(data: data, encoding: .utf8) ?? "nil")")
         }
     }
 
     /// Resolve userId from email if not yet resolved (e.g., after app restart)
     public func resolveUserIdIfNeeded() async {
-        guard userId == nil, let email, let resolver = userIdResolver else { return }
+        print("[AUTH] resolveUserIdIfNeeded: userId=\(userId as Any), email=\(email as Any), isAuthenticated=\(isAuthenticated)")
+        guard userId == nil else {
+            print("[AUTH] resolveUserIdIfNeeded: userId already set, skip")
+            return
+        }
+
+        // Если нет email — получим через /userinfo
+        if email == nil {
+            print("[AUTH] resolveUserIdIfNeeded: no email, calling fetchUserInfo...")
+            try? await fetchUserInfo()
+            // fetchUserInfo мог уже установить userId через resolver
+            if userId != nil {
+                print("[AUTH] resolveUserIdIfNeeded: userId set after fetchUserInfo: \(userId!)")
+                return
+            }
+        }
+
+        guard let email, let resolver = userIdResolver else {
+            print("[AUTH] resolveUserIdIfNeeded: no email or no resolver, giving up")
+            return
+        }
         do {
+            print("[AUTH] resolveUserIdIfNeeded: resolving userId for \(email)...")
             let id = try await resolver(email)
             userId = id
             keychain.save("\(id)", for: "user_id")
+            print("[AUTH] resolveUserIdIfNeeded: resolved userId=\(id)")
         } catch {
-            // userId resolution failed, will retry on next app launch
+            print("[AUTH] resolveUserIdIfNeeded: resolver error: \(error)")
+            // userId resolution failed, will retry later
         }
     }
 

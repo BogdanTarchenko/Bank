@@ -4,12 +4,14 @@ import com.bank.user.dto.CreateUserRequest;
 import com.bank.user.dto.UpdateRolesRequest;
 import com.bank.user.dto.UpdateUserRequest;
 import com.bank.user.dto.UserResponse;
+import com.bank.user.model.Role;
 import com.bank.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -18,6 +20,11 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+
+    @GetMapping("/roles")
+    public List<Role> getAvailableRoles() {
+        return Arrays.asList(Role.values());
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

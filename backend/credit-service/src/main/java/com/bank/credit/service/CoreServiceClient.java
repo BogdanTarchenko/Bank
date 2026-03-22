@@ -21,10 +21,27 @@ public class CoreServiceClient {
         this.restClient = restClientBuilder.baseUrl(coreServiceUrl).build();
     }
 
-    public void transferFromMasterAccount(Long targetAccountId, BigDecimal amount) {
+    public String getAccountCurrency(Long accountId) {
+        try {
+            var response = restClient.get()
+                    .uri("/api/v1/accounts/{id}", accountId)
+                    .retrieve()
+                    .body(Map.class);
+            if (response != null && response.containsKey("currency")) {
+                return response.get("currency").toString();
+            }
+        } catch (Exception e) {
+            log.error("Ошибка получения счёта {}: {}", accountId, e.getMessage());
+            throw new RuntimeException("Не удалось получить данные счёта", e);
+        }
+        throw new RuntimeException("Счёт " + accountId + " не содержит валюту");
+    }
+
+    public void transferFromMasterAccount(Long targetAccountId, BigDecimal amount, String sourceCurrency) {
         var body = Map.of(
                 "targetAccountId", targetAccountId,
-                "amount", amount
+                "amount", amount,
+                "sourceCurrency", sourceCurrency
         );
 
         try {
@@ -34,7 +51,7 @@ public class CoreServiceClient {
                     .body(body)
                     .retrieve()
                     .toBodilessEntity();
-            log.info("Перевод с мастер-счёта на счёт {}: {}", targetAccountId, amount);
+            log.info("Перевод с мастер-счёта на счёт {}: {} {}", targetAccountId, amount, sourceCurrency);
         } catch (Exception e) {
             log.error("Ошибка перевода с мастер-счёта: {}", e.getMessage());
             throw new RuntimeException("Не удалось выполнить перевод с мастер-счёта", e);

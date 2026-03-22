@@ -39,7 +39,6 @@ export function ClientSettingsPage() {
       ])
       setAccounts(accs.filter((a) => !a.isClosed))
       if (settings) {
-        setTheme(settings.theme)
         setHiddenAccounts(settings.hiddenAccounts)
       }
     } catch (err) {

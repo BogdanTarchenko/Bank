@@ -25,20 +25,13 @@ import { accountApi } from '@/api/accountApi'
 import { operationApi } from '@/api/operationApi'
 import { formatDate } from '@/shared/utils/format'
 import { formatMoney } from '@/shared/utils/format'
-import { OperationType } from '@/entities/common'
+import { OperationType, CurrencyLabel, OperationTypeLabel } from '@/entities/common'
 import type { AccountResponse } from '@/entities/account'
 import type { OperationResponse } from '@/entities/operation'
 import { ApiError } from '@/network/httpClient'
 import { connectWebSocket, subscribeToAccountOperations, getStompClient } from '@/network/wsClient'
 
 type ModalType = 'deposit' | 'withdraw' | null
-
-const operationTypeLabels: Record<OperationType, string> = {
-  [OperationType.DEPOSIT]: 'Пополнение',
-  [OperationType.WITHDRAW]: 'Снятие',
-  [OperationType.TRANSFER_IN]: 'Входящий перевод',
-  [OperationType.TRANSFER_OUT]: 'Исходящий перевод',
-}
 
 export function AccountDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -185,7 +178,7 @@ export function AccountDetailPage() {
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
               <Typography variant="body2" color="text.secondary">Валюта</Typography>
-              <Typography variant="h6">{account.currency}</Typography>
+              <Typography variant="h6">{CurrencyLabel[account.currency] ?? account.currency}</Typography>
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
               <Typography variant="body2" color="text.secondary">Статус</Typography>
@@ -223,7 +216,7 @@ export function AccountDetailPage() {
             label: 'Описание',
             render: (row: OperationResponse) => (
               <Typography variant="body2">
-                {row.description || operationTypeLabels[row.type]}
+                {row.description || OperationTypeLabel[row.type] || row.type}
               </Typography>
             ),
           },

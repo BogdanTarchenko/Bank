@@ -4,6 +4,16 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -25,6 +35,7 @@ export default defineConfig({
       '/auth': {
         target: 'http://localhost:8081',
         changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/auth/, ''),
       },
       '/ws': {
         target: 'http://localhost:8084',

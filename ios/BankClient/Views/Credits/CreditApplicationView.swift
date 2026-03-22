@@ -21,6 +21,7 @@ struct CreditApplicationView: View {
                                     .tag(tariff as Tariff?)
                             }
                         }
+                        .pickerStyle(.menu)
                     }
 
                     Section("Счёт зачисления") {
@@ -33,6 +34,7 @@ struct CreditApplicationView: View {
                                     .tag(account as Account?)
                             }
                         }
+                        .pickerStyle(.menu)
                     }
 
                     Section("Параметры") {
@@ -43,7 +45,7 @@ struct CreditApplicationView: View {
                         Stepper("Срок: \(viewModel.termDays) дн.", value: Binding(
                             get: { viewModel.termDays },
                             set: { viewModel.termDays = $0 }
-                        ), in: 1...365)
+                        ), in: viewModel.termRange)
                     }
 
                     if let error = viewModel.errorMessage {

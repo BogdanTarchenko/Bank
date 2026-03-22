@@ -9,6 +9,9 @@ import {
   Button,
   Chip,
   Box,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 import { PageLayout } from '@/shared/ui/PageLayout'
@@ -20,6 +23,7 @@ import { userApi } from '@/api/userApi'
 import { accountApi } from '@/api/accountApi'
 import { creditApi } from '@/api/creditApi'
 import { formatDate } from '@/shared/utils/format'
+import { RoleLabel, CreditGradeLabel, CurrencyLabel } from '@/entities/common'
 import type { UserResponse } from '@/entities/user'
 import type { AccountResponse } from '@/entities/account'
 import type { CreditRatingResponse } from '@/entities/credit'
@@ -35,19 +39,29 @@ export function UserDetailPage() {
   const [loading, setLoading] = useState(true)
   const [blockDialog, setBlockDialog] = useState(false)
   const [blocking, setBlocking] = useState(false)
+  const [availableRoles, setAvailableRoles] = useState<string[]>([])
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([])
+  const [savingRoles, setSavingRoles] = useState(false)
 
   const userId = Number(id)
 
+  const rolesChanged = user
+    ? JSON.stringify([...selectedRoles].sort()) !== JSON.stringify([...user.roles].sort())
+    : false
+
   const fetchData = useCallback(async () => {
     try {
-      const [userData, accsData, ratingData] = await Promise.all([
+      const [userData, accsData, ratingData, roles] = await Promise.all([
         userApi.getUser(userId, 'employee'),
         accountApi.getAccounts(userId, 'employee'),
         creditApi.getCreditRating(userId, 'employee').catch(() => null),
+        userApi.getAvailableRoles().catch(() => []),
       ])
       setUser(userData)
       setAccounts(accsData)
       setRating(ratingData)
+      setAvailableRoles(roles)
+      setSelectedRoles(userData.roles)
     } catch (err) {
       if (err instanceof ApiError) {
         enqueueSnackbar(err.message, { variant: 'error' })
@@ -60,6 +74,26 @@ export function UserDetailPage() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  const handleSaveRoles = async () => {
+    if (selectedRoles.length === 0) {
+      enqueueSnackbar('Должна быть указана хотя бы одна роль', { variant: 'warning' })
+      return
+    }
+    setSavingRoles(true)
+    try {
+      const updated = await userApi.updateUserRoles(userId, selectedRoles)
+      setUser(updated)
+      setSelectedRoles(updated.roles)
+      enqueueSnackbar('Роли обновлены', { variant: 'success' })
+    } catch (err) {
+      if (err instanceof ApiError) {
+        enqueueSnackbar(err.message, { variant: 'error' })
+      }
+    } finally {
+      setSavingRoles(false)
+    }
+  }
 
   const handleBlockToggle = async () => {
     if (!user) return
@@ -123,9 +157,45 @@ export function UserDetailPage() {
             </Grid>
             <Grid size={{ xs: 12 }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Роли</Typography>
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                {user.roles.map((r) => <Chip key={r} label={r} size="small" />)}
-              </Box>
+              {availableRoles.length > 0 ? (
+                <Box>
+                  <FormGroup row>
+                    {availableRoles.map((role) => (
+                      <FormControlLabel
+                        key={role}
+                        control={
+                          <Checkbox
+                            checked={selectedRoles.includes(role)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedRoles((prev) => [...prev, role])
+                              } else {
+                                setSelectedRoles((prev) => prev.filter((r) => r !== role))
+                              }
+                            }}
+                          />
+                        }
+                        label={RoleLabel[role] ?? role}
+                      />
+                    ))}
+                  </FormGroup>
+                  {rolesChanged && (
+                    <LoadingButton
+                      variant="contained"
+                      size="small"
+                      loading={savingRoles}
+                      onClick={handleSaveRoles}
+                      sx={{ mt: 1 }}
+                    >
+                      Сохранить роли
+                    </LoadingButton>
+                  )}
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  {user.roles.map((r) => <Chip key={r} label={RoleLabel[r] ?? r} size="small" />)}
+                </Box>
+              )}
             </Grid>
           </Grid>
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
@@ -154,7 +224,7 @@ export function UserDetailPage() {
               </Grid>
               <Grid size={{ xs: 6, md: 3 }}>
                 <Typography variant="body2" color="text.secondary">Категория</Typography>
-                <Typography variant="h5">{rating.grade}</Typography>
+                <Typography variant="h5">{CreditGradeLabel[rating.grade] ?? rating.grade}</Typography>
               </Grid>
               <Grid size={{ xs: 6, md: 3 }}>
                 <Typography variant="body2" color="text.secondary">Всего кредитов</Typography>
@@ -175,7 +245,7 @@ export function UserDetailPage() {
       <DataTable
         columns={[
           { id: 'id', label: 'ID', render: (row: AccountResponse) => <Typography variant="body2">#{row.id}</Typography> },
-          { id: 'currency', label: 'Валюта', render: (row: AccountResponse) => <Typography variant="body2">{row.currency}</Typography> },
+          { id: 'currency', label: 'Валюта', render: (row: AccountResponse) => <Typography variant="body2">{CurrencyLabel[row.currency] ?? row.currency}</Typography> },
           {
             id: 'balance',
             label: 'Баланс',

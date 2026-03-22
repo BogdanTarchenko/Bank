@@ -16,7 +16,6 @@ import { PageLayout } from '@/shared/ui/PageLayout'
 import { LoadingButton } from '@/shared/ui/LoadingButton'
 import { accountApi } from '@/api/accountApi'
 import { creditApi } from '@/api/creditApi'
-import { useAuthStore } from '@/store/authStore'
 import { formatMoney } from '@/shared/utils/format'
 import type { AccountResponse } from '@/entities/account'
 import type { TariffResponse } from '@/entities/credit'
@@ -25,7 +24,6 @@ import { ApiError } from '@/network/httpClient'
 export function NewCreditPage() {
   const navigate = useNavigate()
   const { enqueueSnackbar } = useSnackbar()
-  const user = useAuthStore((s) => s.user)
   const [accounts, setAccounts] = useState<AccountResponse[]>([])
   const [tariffs, setTariffs] = useState<TariffResponse[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,10 +34,9 @@ export function NewCreditPage() {
   const [termDays, setTermDays] = useState('')
 
   const fetchData = useCallback(async () => {
-    if (!user) return
     try {
       const [accs, tarrs] = await Promise.all([
-        accountApi.getAccounts(user.userId),
+        accountApi.getAccounts(),
         creditApi.getTariffs(),
       ])
       setAccounts(accs.filter((a) => !a.isClosed))
@@ -51,7 +48,7 @@ export function NewCreditPage() {
     } finally {
       setLoading(false)
     }
-  }, [user, enqueueSnackbar])
+  }, [enqueueSnackbar])
 
   useEffect(() => {
     fetchData()
@@ -60,7 +57,7 @@ export function NewCreditPage() {
   const selectedTariff = tariffs.find((t) => t.id === tariffId)
 
   const handleSubmit = async () => {
-    if (!user || !accountId || !tariffId || !amount || !termDays) {
+    if (!accountId || !tariffId || !amount || !termDays) {
       enqueueSnackbar('Заполните все поля', { variant: 'warning' })
       return
     }
@@ -68,7 +65,6 @@ export function NewCreditPage() {
     setSubmitting(true)
     try {
       await creditApi.createCredit({
-        userId: user.userId,
         accountId: accountId,
         tariffId: tariffId,
         amount: parseFloat(amount),
