@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank — Monitoring Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 220px;
+            min-width: 220px;
+            background: #161b27;
+            border-right: 1px solid #1e2a3a;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 0;
+        }
+
+        .sidebar-logo {
+            padding: 0 20px 24px;
+            border-bottom: 1px solid #1e2a3a;
+        }
+
+        .sidebar-logo h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #60a5fa;
+            letter-spacing: -0.3px;
+        }
+
+        .sidebar-logo span {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar nav {
+            margin-top: 16px;
+            flex: 1;
+        }
+
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            border-left: 3px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .sidebar nav a:hover,
+        .sidebar nav a.active {
+            color: #e2e8f0;
+            background: #1e293b;
+            border-left-color: #60a5fa;
+        }
+
+        .sidebar-status {
+            padding: 16px 20px;
+            border-top: 1px solid #1e2a3a;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .sidebar-status span {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* ── Main content ── */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ── Header ── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .page-header .subtitle {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Time range buttons */
+        .time-btns {
+            display: flex;
+            gap: 4px;
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .time-btn {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            color: #94a3b8;
+            transition: all 0.15s;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .time-btn:hover { color: #e2e8f0; background: #334155; }
+        .time-btn.active { background: #3b82f6; color: #fff; }
+
+        /* Service filter */
+        .service-filter select {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .service-filter select:focus { border-color: #3b82f6; }
+
+        /* ── Summary cards ── */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: #161b27;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .card-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f1f5f9;
+            line-height: 1;
+        }
+
+        .card-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 6px;
+        }
+
+        .card-value.danger { color: #f87171; }
+        .card-value.warn { color: #fbbf24; }
+        .card-value.ok { color: #34d399; }
+
+        /* ── Stats table ── */
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 12px;
+        }
+
+        .table-wrapper {
+            background: #161b27;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            background: #1e293b;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-size: 11px;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #1e2a3a;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #1a2234;
+            transition: background 0.1s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #1a2234; }
+
+        tbody td {
+            padding: 12px 16px;
+            color: #cbd5e1;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-ok { background: #052e16; color: #34d399; }
+        .badge-warn { background: #451a03; color: #fbbf24; }
+        .badge-danger { background: #450a0a; color: #f87171; }
+
+        /* ── Charts ── */
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: #161b27;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 260px;
+        }
+
+        /* ── Refresh indicator ── */
+        .refresh-info {
+            font-size: 12px;
+            color: #475569;
+            text-align: right;
+        }
+
+        #refresh-countdown { color: #64748b; font-weight: 600; }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 32px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <h2>Bank Monitor</h2>
+        <span>Observability</span>
+    </div>
+    <nav>
+        <a href="/dashboard" class="active">Dashboard</a>
+        <a href="/api/v1/metrics" target="_blank">Raw Events API</a>
+        <a href="/api/v1/metrics/stats" target="_blank">Stats API</a>
+        <a href="/api/v1/metrics/services" target="_blank">Services API</a>
+    </nav>
+    <div class="sidebar-status">
+        <span class="status-dot"></span>
+        <span id="live-label">Live</span>
+    </div>
+</aside>
+
+<!-- Main -->
+<main class="content">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1>Monitoring Dashboard</h1>
+            <div class="subtitle">Real-time metrics from all bank services</div>
+        </div>
+        <div class="controls">
+            <!-- Time range -->
+            <div class="time-btns">
+                <a th:href="@{/dashboard(hours=1)}"
+                   th:classappend="${hours == 1} ? 'active'" class="time-btn">1h</a>
+                <a th:href="@{/dashboard(hours=6)}"
+                   th:classappend="${hours == 6} ? 'active'" class="time-btn">6h</a>
+                <a th:href="@{/dashboard(hours=24)}"
+                   th:classappend="${hours == 24} ? 'active'" class="time-btn">24h</a>
+            </div>
+
+            <!-- Service filter -->
+            <div class="service-filter">
+                <select id="service-select" onchange="applyServiceFilter()">
+                    <option value="">All Services</option>
+                    <option th:each="svc : ${services}"
+                            th:value="${svc}"
+                            th:text="${svc}">service</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="cards" id="summary-cards">
+        <div class="card">
+            <div class="card-label">Total Requests</div>
+            <div class="card-value" id="card-total">—</div>
+            <div class="card-sub" id="card-period">last <span th:text="${hours}">1</span>h</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Total Errors</div>
+            <div class="card-value" id="card-errors">—</div>
+            <div class="card-sub">HTTP 5xx responses</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Error Rate</div>
+            <div class="card-value" id="card-error-rate">—</div>
+            <div class="card-sub">across all services</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Avg Duration</div>
+            <div class="card-value" id="card-avg-duration">—</div>
+            <div class="card-sub">milliseconds</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Active Services</div>
+            <div class="card-value" id="card-services">—</div>
+            <div class="card-sub">reporting metrics</div>
+        </div>
+    </div>
+
+    <!-- Stats table -->
+    <div>
+        <div class="section-title">Per-Service Statistics</div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Service</th>
+                    <th>Total Requests</th>
+                    <th>Errors</th>
+                    <th>Error Rate</th>
+                    <th>Avg Duration (ms)</th>
+                    <th>P95 (ms)</th>
+                </tr>
+                </thead>
+                <tbody id="stats-tbody">
+                <tr>
+                    <td colspan="6" class="empty-state">Loading…</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts">
+        <div class="chart-card">
+            <h3>Error Rate by Service (%)</h3>
+            <div class="chart-container">
+                <canvas id="errorRateChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <h3>Request Timeline (last 60 min, per minute)</h3>
+            <div class="chart-container">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refresh info -->
+    <div class="refresh-info">
+        Auto-refresh in <span id="refresh-countdown">30</span>s
+    </div>
+
+</main>
+
+<script th:inline="javascript">
+    const HOURS = /*[[${hours}]]*/ 1;
+    const SELECTED_SERVICE = '';
+
+    // ── State ──────────────────────────────────────────────
+    let errorRateChart = null;
+    let timelineChart = null;
+    let countdown = 30;
+
+    // ── Helpers ────────────────────────────────────────────
+    function getServiceParam() {
+        const sel = document.getElementById('service-select').value;
+        return sel ? `&service=${encodeURIComponent(sel)}` : '';
+    }
+
+    function fmt(n, decimals = 1) {
+        if (n == null || isNaN(n)) return '—';
+        return Number(n).toFixed(decimals);
+    }
+
+    function errorBadge(rate) {
+        const cls = rate >= 10 ? 'badge-danger' : rate >= 1 ? 'badge-warn' : 'badge-ok';
+        return `<span class="badge ${cls}">${fmt(rate)}%</span>`;
+    }
+
+    function cardClass(val, warnThreshold, dangerThreshold) {
+        if (val >= dangerThreshold) return 'danger';
+        if (val >= warnThreshold) return 'warn';
+        return 'ok';
+    }
+
+    // ── Service filter ─────────────────────────────────────
+    function applyServiceFilter() {
+        refreshAll();
+    }
+
+    // ── Fetch stats & update table + cards ────────────────
+    async function fetchStats() {
+        const svcParam = getServiceParam();
+        const url = `/api/v1/metrics/stats?hours=${HOURS}${svcParam}`;
+        const resp = await fetch(url);
+        return resp.json();
+    }
+
+    async function fetchEvents() {
+        const svcParam = getServiceParam();
+        const url = `/api/v1/metrics?hours=${HOURS}${svcParam}`;
+        const resp = await fetch(url);
+        return resp.json();
+    }
+
+    function renderTable(stats) {
+        const tbody = document.getElementById('stats-tbody');
+        if (!stats || stats.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No data for the selected period.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = stats.map(s => `
+            <tr>
+                <td><strong style="color:#e2e8f0">${s.service}</strong></td>
+                <td>${s.totalRequests}</td>
+                <td>${s.errorCount}</td>
+                <td>${errorBadge(s.errorRate)}</td>
+                <td>${fmt(s.avgDurationMs)}</td>
+                <td>${fmt(s.p95DurationMs)}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderCards(stats) {
+        const totalReqs = stats.reduce((a, s) => a + s.totalRequests, 0);
+        const totalErrors = stats.reduce((a, s) => a + s.errorCount, 0);
+        const overallRate = totalReqs > 0 ? (totalErrors / totalReqs * 100) : 0;
+        const avgDur = stats.filter(s => s.avgDurationMs > 0).length > 0
+            ? stats.filter(s => s.avgDurationMs > 0).reduce((a, s) => a + s.avgDurationMs, 0) /
+              stats.filter(s => s.avgDurationMs > 0).length
+            : 0;
+
+        document.getElementById('card-total').textContent = totalReqs.toLocaleString();
+        document.getElementById('card-errors').textContent = totalErrors.toLocaleString();
+
+        const rateEl = document.getElementById('card-error-rate');
+        rateEl.textContent = fmt(overallRate) + '%';
+        rateEl.className = 'card-value ' + cardClass(overallRate, 1, 10);
+
+        const durEl = document.getElementById('card-avg-duration');
+        durEl.textContent = fmt(avgDur) + ' ms';
+        durEl.className = 'card-value ' + cardClass(avgDur, 500, 2000);
+
+        document.getElementById('card-services').textContent = stats.length;
+    }
+
+    // ── Error Rate Bar Chart ───────────────────────────────
+    function renderErrorRateChart(stats) {
+        const ctx = document.getElementById('errorRateChart').getContext('2d');
+        const labels = stats.map(s => s.service);
+        const data = stats.map(s => parseFloat(fmt(s.errorRate)));
+        const colors = data.map(v => v >= 10 ? '#f87171' : v >= 1 ? '#fbbf24' : '#34d399');
+
+        if (errorRateChart) {
+            errorRateChart.data.labels = labels;
+            errorRateChart.data.datasets[0].data = data;
+            errorRateChart.data.datasets[0].backgroundColor = colors;
+            errorRateChart.update('none');
+            return;
+        }
+
+        errorRateChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Error Rate %',
+                    data,
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.parsed.y.toFixed(1)}%`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#64748b', font: { size: 11 } },
+                        grid: { color: '#1e293b' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#64748b',
+                            font: { size: 11 },
+                            callback: v => v + '%'
+                        },
+                        grid: { color: '#1e293b' }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── Timeline Line Chart ────────────────────────────────
+    function renderTimelineChart(events) {
+        const ctx = document.getElementById('timelineChart').getContext('2d');
+        const now = new Date();
+
+        // Build minute buckets for last 60 minutes
+        const MINUTES = 60;
+        const buckets = {};
+        const labels = [];
+        for (let i = MINUTES - 1; i >= 0; i--) {
+            const d = new Date(now.getTime() - i * 60000);
+            const key = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            buckets[key] = {};
+            if (i % 5 === 0 || i === 0) labels.push(key);
+            else labels.push('');
+        }
+        const bucketKeys = Object.keys(buckets);
+
+        // Collect services
+        const serviceSet = new Set(events.map(e => e.service));
+        const services = [...serviceSet].sort();
+
+        // Count per service per minute
+        events.forEach(e => {
+            const d = new Date(e.recordedAt);
+            const key = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            if (buckets[key] !== undefined) {
+                buckets[key][e.service] = (buckets[key][e.service] || 0) + 1;
+            }
+        });
+
+        const palette = [
+            '#60a5fa', '#34d399', '#fbbf24', '#f87171', '#a78bfa',
+            '#38bdf8', '#fb923c', '#4ade80', '#f472b6', '#818cf8'
+        ];
+
+        const datasets = services.map((svc, idx) => ({
+            label: svc,
+            data: bucketKeys.map(k => buckets[k][svc] || 0),
+            borderColor: palette[idx % palette.length],
+            backgroundColor: palette[idx % palette.length] + '22',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 2,
+        }));
+
+        if (timelineChart) {
+            timelineChart.data.labels = labels;
+            timelineChart.data.datasets = datasets;
+            timelineChart.update('none');
+            return;
+        }
+
+        timelineChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12, padding: 12 }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 0 },
+                        grid: { color: '#1e293b' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 },
+                        grid: { color: '#1e293b' }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── Refresh all data ───────────────────────────────────
+    async function refreshAll() {
+        try {
+            const [stats, events] = await Promise.all([fetchStats(), fetchEvents()]);
+            renderCards(stats);
+            renderTable(stats);
+            renderErrorRateChart(stats);
+            renderTimelineChart(events);
+        } catch (err) {
+            console.error('Failed to fetch monitoring data:', err);
+        }
+    }
+
+    // ── Auto-refresh countdown ─────────────────────────────
+    function startCountdown() {
+        const el = document.getElementById('refresh-countdown');
+        countdown = 30;
+        const tick = setInterval(() => {
+            countdown--;
+            el.textContent = countdown;
+            if (countdown <= 0) {
+                clearInterval(tick);
+                refreshAll().then(startCountdown);
+            }
+        }, 1000);
+    }
+
+    // ── Init ───────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshAll();
+        startCountdown();
+    });
+</script>
+</body>
+</html>

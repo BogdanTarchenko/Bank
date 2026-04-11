@@ -19,3 +19,6 @@ services:
     url: http://user-service:8082
   credit-service:
     url: http://credit-service:8083
+
+monitoring:
+  url: http://monitoring-service:8086

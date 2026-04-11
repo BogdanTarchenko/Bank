@@ -9,6 +9,9 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("com.google.firebase:firebase-admin:9.3.0")
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.security:spring-security-test")
 }

@@ -1,3 +1,6 @@
 spring:
   datasource:
     url: jdbc:postgresql://postgres-user:5432/bank_user
+
+monitoring:
+  url: http://monitoring-service:8086

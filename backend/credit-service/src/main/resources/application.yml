@@ -23,3 +23,25 @@ services:
 
 credit:
   payment-schedule: "0 0 0 * * *"
+
+monitoring:
+  url: http://localhost:8086
+
+resilience4j:
+  retry:
+    instances:
+      coreService:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+  circuitbreaker:
+    instances:
+      coreService:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        failure-rate-threshold: 70
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        register-health-indicator: true
