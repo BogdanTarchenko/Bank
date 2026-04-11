@@ -102,6 +102,23 @@ services:
       timeout: 3s
       retries: 5
 
+  postgres-monitoring:
+    image: postgres:17-alpine
+    container_name: bank-postgres-monitoring
+    environment:
+      POSTGRES_DB: bank_monitoring
+      POSTGRES_USER: bank
+      POSTGRES_PASSWORD: bank_secret
+    ports:
+      - "5439:5432"
+    volumes:
+      - pgdata-monitoring:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bank -d bank_monitoring"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # --- Redis ---
   redis:
     image: redis:7-alpine
@@ -234,6 +251,21 @@ services:
       redis:
         condition: service_healthy
 
+  monitoring-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prebuilt
+      args:
+        SERVICE_NAME: monitoring-service
+    container_name: bank-monitoring-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      postgres-monitoring:
+        condition: service_healthy
+
 volumes:
   pgdata-core:
   pgdata-auth:
@@ -241,3 +273,4 @@ volumes:
   pgdata-credit:
   pgdata-client-bff:
   pgdata-employee-bff:
+  pgdata-monitoring:
