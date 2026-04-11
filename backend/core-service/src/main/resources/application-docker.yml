@@ -3,3 +3,6 @@ spring:
     url: jdbc:postgresql://postgres-core:5432/bank_core
   kafka:
     bootstrap-servers: kafka:9092
+
+monitoring:
+  url: http://monitoring-service:8086
