@@ -5,3 +5,6 @@ spring:
 services:
   user-service:
     url: http://user-service:8082
+
+monitoring:
+  url: http://monitoring-service:8086
