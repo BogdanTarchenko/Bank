@@ -2,15 +2,21 @@ package com.bank.monitoring.service;
 
 import com.bank.monitoring.dto.MetricEventRequest;
 import com.bank.monitoring.dto.MetricStats;
+import com.bank.monitoring.dto.TraceDetails;
+import com.bank.monitoring.dto.TraceSummary;
 import com.bank.monitoring.model.MetricEvent;
 import com.bank.monitoring.repository.MetricEventRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -89,5 +95,98 @@ public class MetricService {
     @Transactional(readOnly = true)
     public List<String> getAllServices() {
         return repository.findDistinctServices();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TraceSummary> getTraces(String service, int hours, int limit) {
+        LocalDateTime from = LocalDateTime.now().minusHours(hours);
+        LocalDateTime to = LocalDateTime.now();
+        String svcFilter = (service != null && !service.isBlank()) ? service : null;
+
+        List<String> traceIds = repository.findDistinctTraceIds(from, to, svcFilter, PageRequest.of(0, limit));
+        List<TraceSummary> result = new ArrayList<>();
+
+        for (String traceId : traceIds) {
+            List<MetricEvent> spans = repository.findByTraceIdOrderByRecordedAtAsc(traceId);
+            if (spans.isEmpty()) continue;
+            result.add(buildSummary(traceId, spans));
+        }
+
+        result.sort(Comparator.comparing(TraceSummary::startTime).reversed());
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public TraceDetails getTrace(String traceId) {
+        List<MetricEvent> spans = repository.findByTraceIdOrderByRecordedAtAsc(traceId);
+        if (spans.isEmpty()) {
+            return null;
+        }
+        return new TraceDetails(buildSummary(traceId, spans), spans);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MetricEvent> getErrors(String service, int hours, int limit) {
+        LocalDateTime from = LocalDateTime.now().minusHours(hours);
+        LocalDateTime to = LocalDateTime.now();
+        String svcFilter = (service != null && !service.isBlank()) ? service : null;
+        return repository.findErrors(from, to, svcFilter, PageRequest.of(0, limit));
+    }
+
+    private TraceSummary buildSummary(String traceId, List<MetricEvent> spans) {
+        MetricEvent first = spans.get(0);
+        MetricEvent last = spans.get(spans.size() - 1);
+
+        LocalDateTime startTime = first.getRecordedAt();
+        LocalDateTime endTime = last.getRecordedAt();
+
+        long endMillis = endTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long startMillis = startTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long totalDuration = endMillis - startMillis;
+        Long lastDuration = last.getDurationMs();
+        if (lastDuration != null) totalDuration += lastDuration;
+        if (totalDuration < 0) totalDuration = 0;
+
+        // rough fallback: if spans share same timestamp (common when all recorded near-simultaneously)
+        if (totalDuration == 0) {
+            totalDuration = spans.stream()
+                    .filter(s -> s.getDurationMs() != null)
+                    .mapToLong(MetricEvent::getDurationMs)
+                    .max().orElse(0L);
+        }
+
+        Set<String> services = new LinkedHashSet<>();
+        int errorCount = 0;
+        for (MetricEvent span : spans) {
+            services.add(span.getService());
+            if (span.getStatusCode() != null && span.getStatusCode() >= 500) {
+                errorCount++;
+            }
+        }
+
+        // Root span = shortest path or first recorded. Use first recorded.
+        MetricEvent root = first;
+        // Prefer a BFF/auth entry point as root if present
+        for (MetricEvent span : spans) {
+            if (span.getService() != null && (span.getService().contains("bff") || span.getService().contains("auth"))) {
+                root = span;
+                break;
+            }
+        }
+
+        return new TraceSummary(
+                traceId,
+                startTime,
+                endTime,
+                totalDuration,
+                spans.size(),
+                errorCount,
+                new ArrayList<>(services),
+                root.getService(),
+                root.getMethod(),
+                root.getPath(),
+                root.getStatusCode(),
+                errorCount > 0
+        );
     }
 }

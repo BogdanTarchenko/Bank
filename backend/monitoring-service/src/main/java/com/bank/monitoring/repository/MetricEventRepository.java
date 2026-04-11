@@ -1,6 +1,7 @@
 package com.bank.monitoring.repository;
 
 import com.bank.monitoring.model.MetricEvent;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,4 +31,27 @@ public interface MetricEventRepository extends JpaRepository<MetricEvent, Long> 
     long countErrorsByServiceAndPeriod(@Param("service") String service,
                                        @Param("from") LocalDateTime from,
                                        @Param("to") LocalDateTime to);
+
+    List<MetricEvent> findByTraceIdOrderByRecordedAtAsc(String traceId);
+
+    @Query("SELECT m.traceId FROM MetricEvent m " +
+            "WHERE m.traceId IS NOT NULL " +
+            "AND m.recordedAt >= :from AND m.recordedAt <= :to " +
+            "AND (:service IS NULL OR m.service = :service) " +
+            "GROUP BY m.traceId " +
+            "ORDER BY MAX(m.recordedAt) DESC")
+    List<String> findDistinctTraceIds(@Param("from") LocalDateTime from,
+                                      @Param("to") LocalDateTime to,
+                                      @Param("service") String service,
+                                      Pageable pageable);
+
+    @Query("SELECT m FROM MetricEvent m " +
+            "WHERE m.statusCode >= 500 " +
+            "AND m.recordedAt >= :from AND m.recordedAt <= :to " +
+            "AND (:service IS NULL OR m.service = :service) " +
+            "ORDER BY m.recordedAt DESC")
+    List<MetricEvent> findErrors(@Param("from") LocalDateTime from,
+                                 @Param("to") LocalDateTime to,
+                                 @Param("service") String service,
+                                 Pageable pageable);
 }
