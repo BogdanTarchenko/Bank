@@ -8,6 +8,7 @@ struct EmployeeSettingsView: View {
     @State private var viewModel: EmployeeSettingsViewModel?
 
     var body: some View {
+        @Bindable var appState = appState
         NavigationStack {
             Form {
                 Section("Внешний вид") {
@@ -31,6 +32,10 @@ struct EmployeeSettingsView: View {
                     } else {
                         ProgressView()
                     }
+                }
+
+                Section("Разработка") {
+                    Toggle("Экран мониторинга", isOn: $appState.showMonitoringTab)
                 }
 
                 if let error = viewModel?.errorMessage {

@@ -19,6 +19,7 @@ public enum NetworkError: Error, Sendable {
     case decodingError(String)
     case invalidURL
     case unknown(Int, String)
+    case circuitBreakerOpen
 
     public var localizedDescription: String {
         switch self {
@@ -46,6 +47,8 @@ public enum NetworkError: Error, Sendable {
             return "Неверный URL"
         case .unknown(let code, let msg):
             return msg.isEmpty ? "Ошибка \(code)" : msg
+        case .circuitBreakerOpen:
+            return "Сервис временно недоступен. Пожалуйста, повторите позже"
         }
     }
 }

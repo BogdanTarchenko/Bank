@@ -9,6 +9,9 @@ public actor HTTPClient {
     private var onUnauthorized: (@Sendable () async -> Void)?
     private var onForbidden: (@Sendable () async -> Void)?
 
+    private let maxRetries = 2
+    private let retryDelays: [UInt64] = [500_000_000, 1_000_000_000] // 0.5s, 1s
+
     public init(baseURL: String) {
         self.baseURL = baseURL
         self.session = URLSession.shared
@@ -29,23 +32,94 @@ public actor HTTPClient {
     }
 
     public func request<T: Decodable & Sendable>(_ endpoint: any Endpoint) async throws -> T {
-        let request = try await buildRequest(endpoint)
-        let (data, response) = try await performRequest(request)
-        try mapError(response: response, data: data)
-        do {
-            return try decoder.decode(T.self, from: data)
-        } catch {
-            throw NetworkError.decodingError(error.localizedDescription)
+        let traceId = UUID().uuidString
+        let serviceKey = serviceKey(for: baseURL)
+        let startTime = Date()
+
+        guard await CircuitBreaker.shared.canRequest(service: serviceKey) else {
+            await recordMetric(type: .circuitBreakerOpen, traceId: traceId, endpoint: endpoint, statusCode: nil, durationMs: 0, errorMessage: "Circuit open")
+            throw NetworkError.circuitBreakerOpen
         }
+
+        let idempotencyKey = endpoint.method != .GET ? UUID().uuidString : nil
+        var request = try await buildRequest(endpoint, traceId: traceId, idempotencyKey: idempotencyKey)
+        var lastError: Error?
+
+        for attempt in 0...maxRetries {
+            if attempt > 0 {
+                await recordMetric(type: .retry, traceId: traceId, endpoint: endpoint, statusCode: nil, durationMs: 0, errorMessage: "Attempt \(attempt + 1)")
+                try await Task.sleep(nanoseconds: retryDelays[attempt - 1])
+                request = try await buildRequest(endpoint, traceId: traceId, idempotencyKey: idempotencyKey)
+            }
+            do {
+                let (data, response) = try await performRequest(request)
+                let durationMs = Int64(Date().timeIntervalSince(startTime) * 1000)
+                let isError = response.statusCode >= 500
+                await CircuitBreaker.shared.record(service: serviceKey, isError: isError)
+                await recordMetric(type: isError ? .error : .request, traceId: traceId, endpoint: endpoint, statusCode: response.statusCode, durationMs: durationMs, errorMessage: isError ? serverMessage(from: data) : nil)
+                try mapError(response: response, data: data)
+                do {
+                    return try decoder.decode(T.self, from: data)
+                } catch {
+                    throw NetworkError.decodingError(error.localizedDescription)
+                }
+            } catch let error as NetworkError {
+                lastError = error
+                if !isRetryable(error) || attempt == maxRetries { throw error }
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                lastError = error
+                if attempt == maxRetries { throw error }
+            }
+        }
+
+        throw lastError ?? NetworkError.serverError("")
     }
 
     public func requestVoid(_ endpoint: any Endpoint) async throws {
-        let request = try await buildRequest(endpoint)
-        let (data, response) = try await performRequest(request)
-        try mapError(response: response, data: data)
+        let traceId = UUID().uuidString
+        let serviceKey = serviceKey(for: baseURL)
+        let startTime = Date()
+
+        guard await CircuitBreaker.shared.canRequest(service: serviceKey) else {
+            await recordMetric(type: .circuitBreakerOpen, traceId: traceId, endpoint: endpoint, statusCode: nil, durationMs: 0, errorMessage: "Circuit open")
+            throw NetworkError.circuitBreakerOpen
+        }
+
+        let idempotencyKey = endpoint.method != .GET ? UUID().uuidString : nil
+        var request = try await buildRequest(endpoint, traceId: traceId, idempotencyKey: idempotencyKey)
+        var lastError: Error?
+
+        for attempt in 0...maxRetries {
+            if attempt > 0 {
+                await recordMetric(type: .retry, traceId: traceId, endpoint: endpoint, statusCode: nil, durationMs: 0, errorMessage: "Attempt \(attempt + 1)")
+                try await Task.sleep(nanoseconds: retryDelays[attempt - 1])
+                request = try await buildRequest(endpoint, traceId: traceId, idempotencyKey: idempotencyKey)
+            }
+            do {
+                let (data, response) = try await performRequest(request)
+                let durationMs = Int64(Date().timeIntervalSince(startTime) * 1000)
+                let isError = response.statusCode >= 500
+                await CircuitBreaker.shared.record(service: serviceKey, isError: isError)
+                await recordMetric(type: isError ? .error : .request, traceId: traceId, endpoint: endpoint, statusCode: response.statusCode, durationMs: durationMs, errorMessage: isError ? serverMessage(from: data) : nil)
+                try mapError(response: response, data: data)
+                return
+            } catch let error as NetworkError {
+                lastError = error
+                if !isRetryable(error) || attempt == maxRetries { throw error }
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                lastError = error
+                if attempt == maxRetries { throw error }
+            }
+        }
+
+        throw lastError ?? NetworkError.serverError("")
     }
 
-    private func buildRequest(_ endpoint: any Endpoint) async throws -> URLRequest {
+    private func buildRequest(_ endpoint: any Endpoint, traceId: String, idempotencyKey: String? = nil) async throws -> URLRequest {
         guard var components = URLComponents(string: baseURL + endpoint.path) else {
             throw NetworkError.invalidURL
         }
@@ -59,6 +133,11 @@ public actor HTTPClient {
         var request = URLRequest(url: url)
         request.httpMethod = endpoint.method.rawValue
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(traceId, forHTTPHeaderField: "X-Trace-ID")
+
+        if endpoint.method != .GET, let key = idempotencyKey {
+            request.setValue(key, forHTTPHeaderField: "Idempotency-Key")
+        }
 
         if let token = await tokenProvider?() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -123,6 +202,31 @@ public actor HTTPClient {
 
     private func serverMessage(from data: Data) -> String {
         (try? decoder.decode(ErrorResponse.self, from: data))?.message ?? ""
+    }
+
+    private func isRetryable(_ error: NetworkError) -> Bool {
+        switch error {
+        case .serverError, .serviceUnavailable, .networkFailure:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func serviceKey(for baseURL: String) -> String {
+        URL(string: baseURL)?.host ?? baseURL
+    }
+
+    private func recordMetric(type: MetricType, traceId: String, endpoint: any Endpoint, statusCode: Int?, durationMs: Int64, errorMessage: String?) async {
+        await MonitoringClient.shared.record(
+            type: type,
+            traceId: traceId,
+            method: endpoint.method.rawValue,
+            path: endpoint.path,
+            statusCode: statusCode,
+            durationMs: durationMs,
+            errorMessage: errorMessage
+        )
     }
 }
 

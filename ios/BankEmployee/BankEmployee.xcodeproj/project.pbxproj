@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -24,6 +24,8 @@
 		8383FC431BFBB97BF2FDD350 /* BankShared in Frameworks */ = {isa = PBXBuildFile; productRef = 9CD8D73B97F4060E8A22BAC9 /* BankShared */; };
 		8A2F7C772A3B98E4E7CBD237 /* TariffEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0DDA9175A1B472A27317AD /* TariffEndpoint.swift */; };
 		8CDD248EF84000002A2CD909 /* EmployeeDependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E375F09D5EDDBBFFE0EBDD5B /* EmployeeDependencyContainer.swift */; };
+		8F05A0832F8BB0E00051B1A9 /* EmployeeMonitoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F05A0812F8BB0E00051B1A9 /* EmployeeMonitoringView.swift */; };
+		8F05A0852F8BB0F40051B1A9 /* EmployeeMonitoringViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F05A0842F8BB0F40051B1A9 /* EmployeeMonitoringViewModel.swift */; };
 		905D6EE7A5B5DABCBE1F44BA /* TariffManagementUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC50A55D658A580ADC678A0 /* TariffManagementUseCase.swift */; };
 		9904747DA988FA944AAA8DFD /* EmployeeAccountDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8814964825723725101EE446 /* EmployeeAccountDetailView.swift */; };
 		A25CBB6112B0ABC056C2C7DD /* EmployeeAccountDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5693908A2B055E840E51A418 /* EmployeeAccountDetailViewModel.swift */; };
@@ -61,6 +63,8 @@
 		83FF72A733F0C16158170859 /* EmployeeCreditDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmployeeCreditDetailView.swift; sourceTree = "<group>"; };
 		8814964825723725101EE446 /* EmployeeAccountDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmployeeAccountDetailView.swift; sourceTree = "<group>"; };
 		8C72FFAFA499E82EF9055A77 /* EmployeeAllAccountsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmployeeAllAccountsView.swift; sourceTree = "<group>"; };
+		8F05A0812F8BB0E00051B1A9 /* EmployeeMonitoringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmployeeMonitoringView.swift; sourceTree = "<group>"; };
+		8F05A0842F8BB0F40051B1A9 /* EmployeeMonitoringViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmployeeMonitoringViewModel.swift; sourceTree = "<group>"; };
 		9AE791411FFCAC80A3ABF90D /* EmployeeUserDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmployeeUserDetailView.swift; sourceTree = "<group>"; };
 		A1C8032001C4EE24A7292C01 /* EmployeeConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmployeeConfiguration.swift; sourceTree = "<group>"; };
 		AE0DDA9175A1B472A27317AD /* TariffEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TariffEndpoint.swift; sourceTree = "<group>"; };
@@ -182,11 +186,6 @@
 			children = (
 				DBD3B72D9896B61C42239C40 /* AppState.swift */,
 				62D30CD01F4CB6523054D502 /* BankEmployeeApp.swift */,
-				B1F26163EA45DC912F3CF6E9 /* Configuration */,
-				691FA8FCEEE964D32691771E /* Endpoints */,
-				28494065A8C7B590AFBD476D /* UseCases */,
-				9BA3DAD51D7B8886152EE249 /* ViewModels */,
-				E5509C11169A187351D733A9 /* Views */,
 			);
 			name = BankEmployee;
 			path = .;
@@ -200,6 +199,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		8F05A0822F8BB0E00051B1A9 /* Monitoring */ = {
+			isa = PBXGroup;
+			children = (
+				8F05A0812F8BB0E00051B1A9 /* EmployeeMonitoringView.swift */,
+			);
+			path = Monitoring;
+			sourceTree = "<group>";
+		};
 		9BA3DAD51D7B8886152EE249 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
@@ -210,6 +217,7 @@
 				EC6262A9ABCFE71B620E37D6 /* TariffListViewModel.swift */,
 				3C2564E68050F476A55C3B17 /* UserDetailViewModel.swift */,
 				C8867AF0A5DB7149C2782379 /* UserListViewModel.swift */,
+				8F05A0842F8BB0F40051B1A9 /* EmployeeMonitoringViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -251,6 +259,7 @@
 				4CB23754D29DCC1DA5C2B37E /* Settings */,
 				21C08C21FABE042A189FA111 /* Tariffs */,
 				45CDB7ECACE506004E44C4E7 /* Users */,
+				8F05A0822F8BB0E00051B1A9 /* Monitoring */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -293,8 +302,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = 1A54396572C6C9AD3708FEC5 /* Build configuration list for PBXProject "BankEmployee" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -327,6 +334,7 @@
 				E896EABE0AB1F6783E5D2480 /* BankEmployeeApp.swift in Sources */,
 				6F0B2802C2ADEA985342D4CA /* CreateTariffView.swift in Sources */,
 				44EB36D65EF79A54A413206C /* CreditEndpoint.swift in Sources */,
+				8F05A0832F8BB0E00051B1A9 /* EmployeeMonitoringView.swift in Sources */,
 				4CC11EB81721896F86B7896D /* CreditRatingEndpoint.swift in Sources */,
 				6EF3492E7389158D14C2BFC7 /* CreditRatingUseCase.swift in Sources */,
 				9904747DA988FA944AAA8DFD /* EmployeeAccountDetailView.swift in Sources */,
@@ -346,6 +354,7 @@
 				FC1A253C1196742E2224D677 /* EmployeeSettingsViewModel.swift in Sources */,
 				EC498837FA473A39FB581354 /* EmployeeTariffListView.swift in Sources */,
 				196EC8CB7200727875FBC834 /* EmployeeUserDetailView.swift in Sources */,
+				8F05A0852F8BB0F40051B1A9 /* EmployeeMonitoringViewModel.swift in Sources */,
 				C7769119948D6AFBAE0DCEF1 /* EmployeeUserListView.swift in Sources */,
 				41D0E10A19CDAB71A53BE9A9 /* SettingsEndpoint.swift in Sources */,
 				8A2F7C772A3B98E4E7CBD237 /* TariffEndpoint.swift in Sources */,

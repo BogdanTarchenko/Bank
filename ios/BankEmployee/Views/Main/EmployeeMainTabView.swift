@@ -31,6 +31,14 @@ struct EmployeeMainTabView: View {
                     Label("Настройки", systemImage: "gearshape")
                 }
                 .tag(3)
+
+            if appState.showMonitoringTab {
+                EmployeeMonitoringView()
+                    .tabItem {
+                        Label("Мониторинг", systemImage: "chart.bar.xaxis")
+                    }
+                    .tag(4)
+            }
         }
         .onChange(of: selectedTab) { _, _ in
             guard let userId = appState.currentUserId else { return }

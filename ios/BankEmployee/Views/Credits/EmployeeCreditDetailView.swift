@@ -77,16 +77,3 @@ struct EmployeeCreditDetailView: View {
         }
     }
 }
-
-#Preview {
-    NavigationStack {
-        EmployeeCreditDetailView(credit: Credit(
-            id: 1, userId: 42, accountId: 10, tariffId: 1,
-            tariffName: "Стандарт", principal: 50000, remaining: 45000,
-            accruedInterest: 200, interestRate: 0.15, termDays: 365,
-            dailyPayment: 150, status: .ACTIVE,
-            createdAt: "2026-03-01T10:00:00", closedAt: nil
-        ))
-        .environmentObject(EmployeeDependencyContainer())
-    }
-}
