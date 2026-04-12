@@ -15,6 +15,7 @@ struct BankClientApp: App {
                 .environment(appState)
                 .preferredColorScheme(appState.preferredColorScheme)
                 .task {
+                    Task { await MonitoringClient.shared.configure(serviceName: "ios-client") }
                     print("[APP] .task: starting setup...")
                     await container.setup()
                     print("[APP] .task: setup done, userId=\(container.authManager.userId as Any), isAuth=\(container.authManager.isAuthenticated)")

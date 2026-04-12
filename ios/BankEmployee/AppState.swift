@@ -19,6 +19,12 @@ final class EmployeeAppState {
         }
     }
 
+    var showMonitoringTab: Bool = UserDefaults.standard.bool(forKey: "employee_show_monitoring") {
+        didSet {
+            UserDefaults.standard.set(showMonitoringTab, forKey: "employee_show_monitoring")
+        }
+    }
+
     init() {
         if let saved = UserDefaults.standard.string(forKey: "employee_app_theme"),
            let savedTheme = Theme(rawValue: saved) {

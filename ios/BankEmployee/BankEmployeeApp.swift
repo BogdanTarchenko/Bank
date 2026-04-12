@@ -15,6 +15,7 @@ struct BankEmployeeApp: App {
                 .environment(appState)
                 .preferredColorScheme(appState.preferredColorScheme)
                 .task {
+                    Task { await MonitoringClient.shared.configure(serviceName: "ios-employee") }
                     await container.setup()
                     if let userId = container.authManager.userId {
                         appState.currentUserId = userId
