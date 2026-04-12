@@ -1,5 +1,9 @@
 package com.bank.employeebff.service;
 
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 @Service
@@ -18,18 +23,24 @@ public class ProxyService {
 
     private final RestClient restClient;
     private final Map<String, String> serviceUrls;
+    private final CircuitBreaker circuitBreaker;
+    private final Retry retry;
 
     public ProxyService(
             RestClient.Builder restClientBuilder,
             @Value("${services.core-service.url}") String coreUrl,
             @Value("${services.user-service.url}") String userUrl,
-            @Value("${services.credit-service.url}") String creditUrl) {
+            @Value("${services.credit-service.url}") String creditUrl,
+            CircuitBreakerRegistry circuitBreakerRegistry,
+            RetryRegistry retryRegistry) {
         this.restClient = restClientBuilder.build();
         this.serviceUrls = Map.of(
                 "core", coreUrl,
                 "user", userUrl,
                 "credit", creditUrl
         );
+        this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("backendServices");
+        this.retry = retryRegistry.retry("backendServices");
     }
 
     private static final Pattern ROLES_PATH = Pattern.compile("^/users/\\d+/roles$");
@@ -54,8 +65,9 @@ public class ProxyService {
 
         log.debug("Проксирование {} {} -> {}", method, path, targetUrl);
 
+        final String finalTargetUrl = targetUrl;
         var requestSpec = restClient.method(method)
-                .uri(targetUrl)
+                .uri(finalTargetUrl)
                 .header(HttpHeaders.CONTENT_TYPE, "application/json");
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
@@ -67,8 +79,14 @@ public class ProxyService {
             requestSpec = requestSpec.body(body);
         }
 
+        final var finalRequestSpec = requestSpec;
+        Supplier<ResponseEntity<String>> supplier = CircuitBreaker.decorateSupplier(
+                circuitBreaker,
+                Retry.decorateSupplier(retry, () -> finalRequestSpec.retrieve().toEntity(String.class))
+        );
+
         try {
-            return requestSpec.retrieve().toEntity(String.class);
+            return supplier.get();
         } catch (Exception e) {
             log.error("Ошибка проксирования: {}", e.getMessage());
             return ResponseEntity.internalServerError()

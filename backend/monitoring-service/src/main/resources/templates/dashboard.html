@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank — Monitoring Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 220px;
+            min-width: 220px;
+            background: #161b27;
+            border-right: 1px solid #1e2a3a;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 0;
+        }
+
+        .sidebar-logo {
+            padding: 0 20px 24px;
+            border-bottom: 1px solid #1e2a3a;
+        }
+
+        .sidebar-logo h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #60a5fa;
+            letter-spacing: -0.3px;
+        }
+
+        .sidebar-logo span {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar nav {
+            margin-top: 16px;
+            flex: 1;
+        }
+
+        .sidebar nav button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: #94a3b8;
+            font-size: 14px;
+            border-left: 3px solid transparent;
+            transition: all 0.15s;
+            background: transparent;
+            border-top: none;
+            border-right: none;
+            border-bottom: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .sidebar nav button:hover,
+        .sidebar nav button.active {
+            color: #e2e8f0;
+            background: #1e293b;
+            border-left-color: #60a5fa;
+        }
+
+        .sidebar-status {
+            padding: 16px 20px;
+            border-top: 1px solid #1e2a3a;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .sidebar-status span {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* ── Main content ── */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ── Header ── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .page-header .subtitle {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Time range buttons */
+        .time-btns {
+            display: flex;
+            gap: 4px;
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .time-btn {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            color: #94a3b8;
+            transition: all 0.15s;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .time-btn:hover { color: #e2e8f0; background: #334155; }
+        .time-btn.active { background: #3b82f6; color: #fff; }
+
+        /* Service filter */
+        .service-filter select {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .service-filter select:focus { border-color: #3b82f6; }
+
+        /* ── Summary cards ── */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: #161b27;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .card-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f1f5f9;
+            line-height: 1;
+        }
+
+        .card-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 6px;
+        }
+
+        .card-value.danger { color: #f87171; }
+        .card-value.warn { color: #fbbf24; }
+        .card-value.ok { color: #34d399; }
+
+        /* ── Tables ── */
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 12px;
+        }
+
+        .table-wrapper {
+            background: #161b27;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            background: #1e293b;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-size: 11px;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #1e2a3a;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #1a2234;
+            transition: background 0.1s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #1a2234; }
+
+        tbody tr.clickable { cursor: pointer; }
+
+        tbody td {
+            padding: 12px 16px;
+            color: #cbd5e1;
+            vertical-align: top;
+        }
+
+        td code, .mono {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 12px;
+            color: #cbd5e1;
+        }
+
+        .trace-id {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 11px;
+            color: #60a5fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-ok { background: #052e16; color: #34d399; }
+        .badge-warn { background: #451a03; color: #fbbf24; }
+        .badge-danger { background: #450a0a; color: #f87171; }
+        .badge-info { background: #082f49; color: #60a5fa; }
+        .badge-svc { background: #1e293b; color: #a78bfa; }
+
+        .status-2xx { color: #34d399; font-weight: 600; }
+        .status-3xx { color: #60a5fa; font-weight: 600; }
+        .status-4xx { color: #fbbf24; font-weight: 600; }
+        .status-5xx { color: #f87171; font-weight: 600; }
+
+        .method {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: 'SFMono-Regular', Consolas, monospace;
+        }
+        .method-GET { background: #082f49; color: #60a5fa; }
+        .method-POST { background: #052e16; color: #34d399; }
+        .method-PUT { background: #451a03; color: #fbbf24; }
+        .method-DELETE { background: #450a0a; color: #f87171; }
+        .method-PATCH { background: #2e1065; color: #a78bfa; }
+
+        /* ── Charts ── */
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: #161b27;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 260px;
+        }
+
+        /* ── Refresh indicator ── */
+        .refresh-info {
+            font-size: 12px;
+            color: #475569;
+            text-align: right;
+        }
+
+        #refresh-countdown { color: #64748b; font-weight: 600; }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 32px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        /* ── Trace waterfall ── */
+        .waterfall {
+            background: #161b27;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .waterfall-row {
+            display: grid;
+            grid-template-columns: 200px 1fr 80px;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #1a2234;
+        }
+        .waterfall-row:last-child { border-bottom: none; }
+
+        .waterfall-label {
+            font-size: 12px;
+            color: #cbd5e1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .waterfall-bar-container {
+            position: relative;
+            height: 20px;
+            background: #0f1117;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .waterfall-bar {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background: #3b82f6;
+            border-radius: 3px;
+            min-width: 2px;
+        }
+        .waterfall-bar.err { background: #f87171; }
+
+        .waterfall-duration {
+            font-size: 11px;
+            color: #94a3b8;
+            text-align: right;
+            font-family: monospace;
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: #0f1117;
+            border: 1px solid #1e2a3a;
+            border-radius: 12px;
+            max-width: 1100px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #1e2a3a;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            color: #f1f5f9;
+            font-weight: 600;
+        }
+        .modal-header .trace-id { margin-top: 4px; font-size: 12px; }
+
+        .modal-close {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .modal-close:hover { background: #334155; }
+
+        .modal-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .modal-meta-item {
+            background: #161b27;
+            border: 1px solid #1e2a3a;
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+        .modal-meta-item .label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .modal-meta-item .value {
+            font-size: 14px;
+            color: #e2e8f0;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* Tabs */
+        .tab-content { display: none; }
+        .tab-content.active { display: flex; flex-direction: column; gap: 24px; }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+        /* Search input */
+        .search-input {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            width: 240px;
+        }
+        .search-input:focus { border-color: #3b82f6; }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <h2>Bank Monitor</h2>
+        <span>Observability</span>
+    </div>
+    <nav id="tab-nav">
+        <button data-tab="dashboard" class="active">Dashboard</button>
+        <button data-tab="traces">Traces</button>
+        <button data-tab="events">Events</button>
+        <button data-tab="errors">Errors</button>
+        <button data-tab="services">Services</button>
+    </nav>
+    <div class="sidebar-status">
+        <span class="status-dot"></span>
+        <span id="live-label">Live</span>
+    </div>
+</aside>
+
+<!-- Main -->
+<main class="content">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 id="page-title">Monitoring Dashboard</h1>
+            <div class="subtitle" id="page-subtitle">Real-time metrics from all bank services</div>
+        </div>
+        <div class="controls">
+            <!-- Time range -->
+            <div class="time-btns">
+                <a th:href="@{/dashboard(hours=1)}"
+                   th:classappend="${hours == 1} ? 'active'" class="time-btn">1h</a>
+                <a th:href="@{/dashboard(hours=6)}"
+                   th:classappend="${hours == 6} ? 'active'" class="time-btn">6h</a>
+                <a th:href="@{/dashboard(hours=24)}"
+                   th:classappend="${hours == 24} ? 'active'" class="time-btn">24h</a>
+            </div>
+
+            <!-- Service filter -->
+            <div class="service-filter">
+                <select id="service-select" onchange="applyServiceFilter()">
+                    <option value="">All Services</option>
+                    <option th:each="svc : ${services}"
+                            th:value="${svc}"
+                            th:text="${svc}">service</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════ Dashboard tab ══════════════════════════ -->
+    <div class="tab-content active" data-tab-content="dashboard">
+        <div class="cards" id="summary-cards">
+            <div class="card">
+                <div class="card-label">Total Requests</div>
+                <div class="card-value" id="card-total">—</div>
+                <div class="card-sub">last <span th:text="${hours}">1</span>h</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Total Errors</div>
+                <div class="card-value" id="card-errors">—</div>
+                <div class="card-sub">HTTP 5xx responses</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Error Rate</div>
+                <div class="card-value" id="card-error-rate">—</div>
+                <div class="card-sub">across all services</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Avg Duration</div>
+                <div class="card-value" id="card-avg-duration">—</div>
+                <div class="card-sub">milliseconds</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Active Services</div>
+                <div class="card-value" id="card-services">—</div>
+                <div class="card-sub">reporting metrics</div>
+            </div>
+        </div>
+
+        <div>
+            <div class="section-title">Per-Service Statistics</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Total Requests</th>
+                        <th>Errors</th>
+                        <th>Error Rate</th>
+                        <th>Avg Duration (ms)</th>
+                        <th>P95 (ms)</th>
+                    </tr>
+                    </thead>
+                    <tbody id="stats-tbody">
+                    <tr><td colspan="6" class="empty-state">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="charts">
+            <div class="chart-card">
+                <h3>Error Rate by Service (%)</h3>
+                <div class="chart-container"><canvas id="errorRateChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Request Timeline (last 60 min, per minute)</h3>
+                <div class="chart-container"><canvas id="timelineChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="refresh-info">
+            Auto-refresh in <span id="refresh-countdown">30</span>s
+        </div>
+    </div>
+
+    <!-- ══════════════════════════ Traces tab ══════════════════════════ -->
+    <div class="tab-content" data-tab-content="traces">
+        <div>
+            <div class="section-title">Distributed Traces</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Trace ID</th>
+                        <th>Entry</th>
+                        <th>Services</th>
+                        <th>Spans</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="traces-tbody">
+                    <tr><td colspan="7" class="empty-state">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════ Events tab ══════════════════════════ -->
+    <div class="tab-content" data-tab-content="events">
+        <div>
+            <div class="section-title">Raw Events</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Service</th>
+                        <th>Method</th>
+                        <th>Path</th>
+                        <th>Status</th>
+                        <th>Duration</th>
+                        <th>Trace</th>
+                    </tr>
+                    </thead>
+                    <tbody id="events-tbody">
+                    <tr><td colspan="7" class="empty-state">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════ Errors tab ══════════════════════════ -->
+    <div class="tab-content" data-tab-content="errors">
+        <div class="cards">
+            <div class="card">
+                <div class="card-label">Total Errors</div>
+                <div class="card-value danger" id="err-card-total">—</div>
+                <div class="card-sub">HTTP 5xx responses</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Affected Services</div>
+                <div class="card-value" id="err-card-services">—</div>
+                <div class="card-sub">with at least one error</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Unique Error Paths</div>
+                <div class="card-value" id="err-card-paths">—</div>
+                <div class="card-sub">distinct endpoints</div>
+            </div>
+        </div>
+
+        <div>
+            <div class="section-title">Error Events</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Service</th>
+                        <th>Method</th>
+                        <th>Path</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                        <th>Trace</th>
+                    </tr>
+                    </thead>
+                    <tbody id="errors-tbody">
+                    <tr><td colspan="7" class="empty-state">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════ Services tab ══════════════════════════ -->
+    <div class="tab-content" data-tab-content="services">
+        <div>
+            <div class="section-title">Service Health</div>
+            <div id="services-grid" class="cards" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                <div class="empty-state" style="grid-column: 1/-1">Loading…</div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- ══════════════════════════ Trace details modal ══════════════════════════ -->
+<div class="modal-overlay" id="trace-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <div>
+                <h2>Trace Details</h2>
+                <div class="trace-id" id="modal-trace-id">—</div>
+            </div>
+            <button class="modal-close" onclick="closeTraceModal()">Close ✕</button>
+        </div>
+        <div class="modal-meta" id="modal-meta"></div>
+        <div class="section-title">Spans (waterfall)</div>
+        <div class="waterfall" id="modal-waterfall">Loading…</div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const HOURS = /*[[${hours}]]*/ 1;
+
+    // ── State ──────────────────────────────────────────────
+    let errorRateChart = null;
+    let timelineChart = null;
+    let countdown = 30;
+    let countdownTimer = null;
+    let activeTab = 'dashboard';
+
+    const PAGE_META = {
+        dashboard: { title: 'Monitoring Dashboard', subtitle: 'Real-time metrics from all bank services' },
+        traces:    { title: 'Distributed Traces',   subtitle: 'End-to-end request tracing across services' },
+        events:    { title: 'Raw Events',           subtitle: 'Latest HTTP request traces collected from services' },
+        errors:    { title: 'Errors',               subtitle: 'HTTP 5xx responses captured by monitoring' },
+        services:  { title: 'Services',             subtitle: 'Per-service health summary' }
+    };
+
+    // ── Helpers ────────────────────────────────────────────
+    function getServiceParam() {
+        const sel = document.getElementById('service-select').value;
+        return sel ? `&service=${encodeURIComponent(sel)}` : '';
+    }
+
+    function fmt(n, decimals = 1) {
+        if (n == null || isNaN(n)) return '—';
+        return Number(n).toFixed(decimals);
+    }
+
+    function errorBadge(rate) {
+        const cls = rate >= 10 ? 'badge-danger' : rate >= 1 ? 'badge-warn' : 'badge-ok';
+        return `<span class="badge ${cls}">${fmt(rate)}%</span>`;
+    }
+
+    function cardClass(val, warnThreshold, dangerThreshold) {
+        if (val >= dangerThreshold) return 'danger';
+        if (val >= warnThreshold) return 'warn';
+        return 'ok';
+    }
+
+    function escapeHtml(s) {
+        if (s == null) return '';
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function statusClass(code) {
+        if (code == null) return '';
+        if (code >= 500) return 'status-5xx';
+        if (code >= 400) return 'status-4xx';
+        if (code >= 300) return 'status-3xx';
+        return 'status-2xx';
+    }
+
+    function methodBadge(method) {
+        const m = escapeHtml(method || '');
+        return `<span class="method method-${m}">${m}</span>`;
+    }
+
+    function formatTime(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function shortTrace(id) {
+        if (!id) return '—';
+        return id.length > 10 ? id.substring(0, 8) + '…' : id;
+    }
+
+    function truncate(s, n) {
+        if (!s) return '';
+        return s.length > n ? s.substring(0, n) + '…' : s;
+    }
+
+    // ── Tab switching ──────────────────────────────────────
+    function switchTab(name) {
+        activeTab = name;
+        document.querySelectorAll('#tab-nav button').forEach(b => {
+            b.classList.toggle('active', b.dataset.tab === name);
+        });
+        document.querySelectorAll('.tab-content').forEach(c => {
+            c.classList.toggle('active', c.dataset.tabContent === name);
+        });
+
+        const meta = PAGE_META[name];
+        document.getElementById('page-title').textContent = meta.title;
+        document.getElementById('page-subtitle').textContent = meta.subtitle;
+
+        refreshCurrentTab();
+    }
+
+    function refreshCurrentTab() {
+        switch (activeTab) {
+            case 'dashboard': refreshDashboard(); break;
+            case 'traces':    refreshTraces();    break;
+            case 'events':    refreshEvents();    break;
+            case 'errors':    refreshErrors();    break;
+            case 'services':  refreshServices();  break;
+        }
+    }
+
+    // ── Service filter ─────────────────────────────────────
+    function applyServiceFilter() {
+        refreshCurrentTab();
+    }
+
+    // ── DASHBOARD tab ──────────────────────────────────────
+    async function refreshDashboard() {
+        try {
+            const svcParam = getServiceParam();
+            const [statsResp, eventsResp] = await Promise.all([
+                fetch(`/api/v1/metrics/stats?hours=${HOURS}${svcParam}`),
+                fetch(`/api/v1/metrics?hours=${HOURS}${svcParam}`)
+            ]);
+            const stats = await statsResp.json();
+            const events = await eventsResp.json();
+            renderCards(stats);
+            renderStatsTable(stats);
+            renderErrorRateChart(stats);
+            renderTimelineChart(events);
+        } catch (err) {
+            console.error('Failed to fetch dashboard data:', err);
+        }
+    }
+
+    function renderCards(stats) {
+        const totalReqs = stats.reduce((a, s) => a + s.totalRequests, 0);
+        const totalErrors = stats.reduce((a, s) => a + s.errorCount, 0);
+        const overallRate = totalReqs > 0 ? (totalErrors / totalReqs * 100) : 0;
+        const withDur = stats.filter(s => s.avgDurationMs > 0);
+        const avgDur = withDur.length > 0
+            ? withDur.reduce((a, s) => a + s.avgDurationMs, 0) / withDur.length
+            : 0;
+
+        document.getElementById('card-total').textContent = totalReqs.toLocaleString();
+        document.getElementById('card-errors').textContent = totalErrors.toLocaleString();
+
+        const rateEl = document.getElementById('card-error-rate');
+        rateEl.textContent = fmt(overallRate) + '%';
+        rateEl.className = 'card-value ' + cardClass(overallRate, 1, 10);
+
+        const durEl = document.getElementById('card-avg-duration');
+        durEl.textContent = fmt(avgDur) + ' ms';
+        durEl.className = 'card-value ' + cardClass(avgDur, 500, 2000);
+
+        document.getElementById('card-services').textContent = stats.length;
+    }
+
+    function renderStatsTable(stats) {
+        const tbody = document.getElementById('stats-tbody');
+        if (!stats || stats.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No data for the selected period.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = stats.map(s => `
+            <tr>
+                <td><strong style="color:#e2e8f0">${escapeHtml(s.service)}</strong></td>
+                <td>${s.totalRequests}</td>
+                <td>${s.errorCount}</td>
+                <td>${errorBadge(s.errorRate)}</td>
+                <td>${fmt(s.avgDurationMs)}</td>
+                <td>${fmt(s.p95DurationMs)}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderErrorRateChart(stats) {
+        const ctx = document.getElementById('errorRateChart').getContext('2d');
+        const labels = stats.map(s => s.service);
+        const data = stats.map(s => parseFloat(fmt(s.errorRate)));
+        const colors = data.map(v => v >= 10 ? '#f87171' : v >= 1 ? '#fbbf24' : '#34d399');
+
+        if (errorRateChart) {
+            errorRateChart.data.labels = labels;
+            errorRateChart.data.datasets[0].data = data;
+            errorRateChart.data.datasets[0].backgroundColor = colors;
+            errorRateChart.update('none');
+            return;
+        }
+
+        errorRateChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{
+                label: 'Error Rate %', data, backgroundColor: colors, borderRadius: 6, borderSkipped: false,
+            }]},
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(1)}%` } }
+                },
+                scales: {
+                    x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e293b' } },
+                    y: { beginAtZero: true,
+                        ticks: { color: '#64748b', font: { size: 11 }, callback: v => v + '%' },
+                        grid: { color: '#1e293b' } }
+                }
+            }
+        });
+    }
+
+    function renderTimelineChart(events) {
+        const ctx = document.getElementById('timelineChart').getContext('2d');
+        const now = new Date();
+        const MINUTES = 60;
+        const buckets = {};
+        const labels = [];
+        for (let i = MINUTES - 1; i >= 0; i--) {
+            const d = new Date(now.getTime() - i * 60000);
+            const key = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            buckets[key] = {};
+            if (i % 5 === 0 || i === 0) labels.push(key); else labels.push('');
+        }
+        const bucketKeys = Object.keys(buckets);
+        const serviceSet = new Set(events.map(e => e.service));
+        const services = [...serviceSet].sort();
+        events.forEach(e => {
+            const d = new Date(e.recordedAt);
+            const key = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            if (buckets[key] !== undefined) {
+                buckets[key][e.service] = (buckets[key][e.service] || 0) + 1;
+            }
+        });
+        const palette = ['#60a5fa','#34d399','#fbbf24','#f87171','#a78bfa','#38bdf8','#fb923c','#4ade80','#f472b6','#818cf8'];
+        const datasets = services.map((svc, idx) => ({
+            label: svc,
+            data: bucketKeys.map(k => buckets[k][svc] || 0),
+            borderColor: palette[idx % palette.length],
+            backgroundColor: palette[idx % palette.length] + '22',
+            fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2,
+        }));
+        if (timelineChart) {
+            timelineChart.data.labels = labels;
+            timelineChart.data.datasets = datasets;
+            timelineChart.update('none');
+            return;
+        }
+        timelineChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { position: 'bottom',
+                    labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12, padding: 12 }}},
+                scales: {
+                    x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 0 }, grid: { color: '#1e293b' } },
+                    y: { beginAtZero: true, ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 }, grid: { color: '#1e293b' } }
+                }
+            }
+        });
+    }
+
+    // ── TRACES tab ─────────────────────────────────────────
+    async function refreshTraces() {
+        const tbody = document.getElementById('traces-tbody');
+        try {
+            const svcParam = getServiceParam();
+            const resp = await fetch(`/api/v1/metrics/traces?hours=${HOURS}${svcParam}&limit=100`);
+            const traces = await resp.json();
+            if (!traces || traces.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No traces for the selected period.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = traces.map(t => {
+                const svcBadges = (t.services || []).map(s => `<span class="badge badge-svc">${escapeHtml(s)}</span>`).join(' ');
+                const statusCls = statusClass(t.rootStatus);
+                const durBadge = t.hasError
+                    ? `<span class="badge badge-danger">${t.totalDurationMs} ms</span>`
+                    : `<span class="badge badge-info">${t.totalDurationMs} ms</span>`;
+                const entry = `${methodBadge(t.rootMethod)} <code>${escapeHtml(truncate(t.rootPath, 50))}</code>`;
+                return `
+                    <tr class="clickable" onclick="openTraceModal('${escapeHtml(t.traceId)}')">
+                        <td class="mono">${formatTime(t.startTime)}</td>
+                        <td><span class="trace-id">${shortTrace(t.traceId)}</span></td>
+                        <td>${entry}</td>
+                        <td>${svcBadges}</td>
+                        <td>${t.spanCount}</td>
+                        <td>${durBadge}</td>
+                        <td><span class="${statusCls}">${t.rootStatus != null ? t.rootStatus : '—'}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        } catch (err) {
+            console.error('Failed to fetch traces:', err);
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load traces.</td></tr>';
+        }
+    }
+
+    // ── EVENTS tab ─────────────────────────────────────────
+    async function refreshEvents() {
+        const tbody = document.getElementById('events-tbody');
+        try {
+            const svcParam = getServiceParam();
+            const resp = await fetch(`/api/v1/metrics?hours=${HOURS}${svcParam}`);
+            const events = await resp.json();
+            if (!events || events.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No events for the selected period.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = events.map(e => `
+                <tr>
+                    <td class="mono">${formatTime(e.recordedAt)}</td>
+                    <td><span class="badge badge-svc">${escapeHtml(e.service)}</span></td>
+                    <td>${methodBadge(e.method)}</td>
+                    <td><code>${escapeHtml(truncate(e.path, 60))}</code></td>
+                    <td><span class="${statusClass(e.statusCode)}">${e.statusCode != null ? e.statusCode : '—'}</span></td>
+                    <td class="mono">${e.durationMs != null ? e.durationMs + ' ms' : '—'}</td>
+                    <td>${e.traceId
+                        ? `<a class="trace-id" href="#" onclick="event.preventDefault(); openTraceModal('${escapeHtml(e.traceId)}')">${shortTrace(e.traceId)}</a>`
+                        : '<span style="color:#475569">—</span>'}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error('Failed to fetch events:', err);
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load events.</td></tr>';
+        }
+    }
+
+    // ── ERRORS tab ─────────────────────────────────────────
+    async function refreshErrors() {
+        const tbody = document.getElementById('errors-tbody');
+        try {
+            const svcParam = getServiceParam();
+            const resp = await fetch(`/api/v1/metrics/errors?hours=${HOURS}${svcParam}&limit=200`);
+            const errors = await resp.json();
+
+            document.getElementById('err-card-total').textContent = errors.length.toLocaleString();
+            const uniqueServices = new Set(errors.map(e => e.service));
+            document.getElementById('err-card-services').textContent = uniqueServices.size;
+            const uniquePaths = new Set(errors.map(e => (e.service || '') + ':' + (e.path || '')));
+            document.getElementById('err-card-paths').textContent = uniquePaths.size;
+
+            if (!errors || errors.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No errors for the selected period. 🎉</td></tr>';
+                return;
+            }
+            tbody.innerHTML = errors.map(e => `
+                <tr>
+                    <td class="mono">${formatTime(e.recordedAt)}</td>
+                    <td><span class="badge badge-svc">${escapeHtml(e.service)}</span></td>
+                    <td>${methodBadge(e.method)}</td>
+                    <td><code>${escapeHtml(truncate(e.path, 50))}</code></td>
+                    <td><span class="${statusClass(e.statusCode)}">${e.statusCode != null ? e.statusCode : '—'}</span></td>
+                    <td style="color:#f87171">${escapeHtml(truncate(e.errorMessage || '', 60))}</td>
+                    <td>${e.traceId
+                        ? `<a class="trace-id" href="#" onclick="event.preventDefault(); openTraceModal('${escapeHtml(e.traceId)}')">${shortTrace(e.traceId)}</a>`
+                        : '<span style="color:#475569">—</span>'}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error('Failed to fetch errors:', err);
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load errors.</td></tr>';
+        }
+    }
+
+    // ── SERVICES tab ───────────────────────────────────────
+    async function refreshServices() {
+        const grid = document.getElementById('services-grid');
+        try {
+            const resp = await fetch(`/api/v1/metrics/stats?hours=${HOURS}`);
+            const stats = await resp.json();
+            if (!stats || stats.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1">No services reporting metrics.</div>';
+                return;
+            }
+            grid.innerHTML = stats.map(s => {
+                const rateCls = s.errorRate >= 10 ? 'danger' : s.errorRate >= 1 ? 'warn' : 'ok';
+                const healthDot = s.errorRate >= 10 ? '#f87171' : s.errorRate >= 1 ? '#fbbf24' : '#34d399';
+                return `
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+                            <div style="display:flex; align-items:center; gap:8px">
+                                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${healthDot}"></span>
+                                <strong style="color:#f1f5f9; font-size:15px">${escapeHtml(s.service)}</strong>
+                            </div>
+                            ${errorBadge(s.errorRate)}
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                            <div>
+                                <div class="card-label">Requests</div>
+                                <div style="font-size:18px; font-weight:600; color:#e2e8f0">${s.totalRequests.toLocaleString()}</div>
+                            </div>
+                            <div>
+                                <div class="card-label">Errors</div>
+                                <div style="font-size:18px; font-weight:600; color:${s.errorCount > 0 ? '#f87171' : '#e2e8f0'}">${s.errorCount}</div>
+                            </div>
+                            <div>
+                                <div class="card-label">Avg ms</div>
+                                <div style="font-size:18px; font-weight:600; color:#e2e8f0">${fmt(s.avgDurationMs)}</div>
+                            </div>
+                            <div>
+                                <div class="card-label">P95 ms</div>
+                                <div style="font-size:18px; font-weight:600; color:#e2e8f0">${fmt(s.p95DurationMs)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            console.error('Failed to fetch services:', err);
+            grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1">Failed to load services.</div>';
+        }
+    }
+
+    // ── TRACE MODAL ────────────────────────────────────────
+    async function openTraceModal(traceId) {
+        const modal = document.getElementById('trace-modal');
+        const meta = document.getElementById('modal-meta');
+        const waterfall = document.getElementById('modal-waterfall');
+        document.getElementById('modal-trace-id').textContent = traceId;
+        meta.innerHTML = '';
+        waterfall.innerHTML = '<div class="empty-state">Loading…</div>';
+        modal.classList.add('open');
+
+        try {
+            const resp = await fetch(`/api/v1/metrics/traces/${encodeURIComponent(traceId)}`);
+            if (!resp.ok) {
+                waterfall.innerHTML = '<div class="empty-state">Trace not found.</div>';
+                return;
+            }
+            const details = await resp.json();
+            const summary = details.summary;
+            const spans = details.spans;
+
+            meta.innerHTML = `
+                <div class="modal-meta-item"><div class="label">Start</div><div class="value">${formatTime(summary.startTime)}</div></div>
+                <div class="modal-meta-item"><div class="label">Duration</div><div class="value">${summary.totalDurationMs} ms</div></div>
+                <div class="modal-meta-item"><div class="label">Spans</div><div class="value">${summary.spanCount}</div></div>
+                <div class="modal-meta-item"><div class="label">Services</div><div class="value">${summary.services.length}</div></div>
+                <div class="modal-meta-item"><div class="label">Errors</div>
+                    <div class="value" style="color:${summary.errorCount > 0 ? '#f87171' : '#34d399'}">${summary.errorCount}</div></div>
+                <div class="modal-meta-item"><div class="label">Root Entry</div>
+                    <div class="value" style="font-size:12px; font-family:monospace">${escapeHtml(summary.rootMethod || '')} ${escapeHtml(summary.rootPath || '')}</div></div>
+            `;
+
+            renderWaterfall(spans);
+        } catch (err) {
+            console.error('Failed to load trace:', err);
+            waterfall.innerHTML = '<div class="empty-state">Failed to load trace.</div>';
+        }
+    }
+
+    function renderWaterfall(spans) {
+        const waterfall = document.getElementById('modal-waterfall');
+        if (!spans || spans.length === 0) {
+            waterfall.innerHTML = '<div class="empty-state">No spans.</div>';
+            return;
+        }
+
+        // Compute relative offsets & total span
+        const times = spans.map(s => new Date(s.recordedAt).getTime());
+        const minStart = Math.min(...times);
+        const maxEnd = Math.max(...spans.map((s, i) => times[i] + (s.durationMs || 0)));
+        const totalMs = Math.max(1, maxEnd - minStart);
+
+        waterfall.innerHTML = spans.map((s, i) => {
+            const start = times[i] - minStart;
+            const dur = s.durationMs || 0;
+            const leftPct = (start / totalMs) * 100;
+            const widthPct = Math.max(0.5, (dur / totalMs) * 100);
+            const isErr = s.statusCode != null && s.statusCode >= 500;
+            const statusCls = statusClass(s.statusCode);
+            const label = `<span class="badge badge-svc">${escapeHtml(s.service)}</span> ${methodBadge(s.method)} <span class="${statusCls}">${s.statusCode != null ? s.statusCode : ''}</span>`;
+            return `
+                <div class="waterfall-row">
+                    <div class="waterfall-label" title="${escapeHtml(s.path || '')}">${label}<br><code style="font-size:10px; color:#64748b">${escapeHtml(truncate(s.path || '', 32))}</code></div>
+                    <div class="waterfall-bar-container">
+                        <div class="waterfall-bar ${isErr ? 'err' : ''}" style="left:${leftPct}%; width:${widthPct}%"></div>
+                    </div>
+                    <div class="waterfall-duration">${dur} ms</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function closeTraceModal() {
+        document.getElementById('trace-modal').classList.remove('open');
+    }
+
+    // Close modal on ESC or background click
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTraceModal(); });
+    document.getElementById('trace-modal').addEventListener('click', e => {
+        if (e.target.id === 'trace-modal') closeTraceModal();
+    });
+
+    // ── Auto-refresh countdown (dashboard only) ────────────
+    function startCountdown() {
+        if (countdownTimer) clearInterval(countdownTimer);
+        const el = document.getElementById('refresh-countdown');
+        countdown = 30;
+        countdownTimer = setInterval(() => {
+            countdown--;
+            if (el) el.textContent = countdown;
+            if (countdown <= 0) {
+                refreshCurrentTab();
+                countdown = 30;
+            }
+        }, 1000);
+    }
+
+    // ── Init ───────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('#tab-nav button').forEach(b => {
+            b.addEventListener('click', () => switchTab(b.dataset.tab));
+        });
+        refreshCurrentTab();
+        startCountdown();
+    });
+</script>
+</body>
+</html>

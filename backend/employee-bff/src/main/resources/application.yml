@@ -37,3 +37,28 @@ services:
     url: http://localhost:8082
   credit-service:
     url: http://localhost:8083
+
+monitoring:
+  url: http://localhost:8086
+
+firebase:
+  service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH:}
+
+resilience4j:
+  retry:
+    instances:
+      backendServices:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+  circuitbreaker:
+    instances:
+      backendServices:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        failure-rate-threshold: 70
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        register-health-indicator: true

@@ -5,3 +5,6 @@ spring:
 services:
   core-service:
     url: http://core-service:8080
+
+monitoring:
+  url: http://monitoring-service:8086
