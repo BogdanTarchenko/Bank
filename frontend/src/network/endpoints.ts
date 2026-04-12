@@ -24,6 +24,7 @@ export const endpoints = {
     user: (id: number) => `${CLIENT_BFF}/proxy/user/users/${id}`,
     userByEmail: `${CLIENT_BFF}/proxy/user/users/by-email`,
     settings: `${CLIENT_BFF}/settings`,
+    deviceTokens: `${CLIENT_BFF}/device-tokens`,
   },
   employee: {
     accounts: `${EMPLOYEE_BFF}/proxy/core/accounts`,
@@ -42,5 +43,6 @@ export const endpoints = {
     userRoles: (id: number) => `${EMPLOYEE_BFF}/users/${id}/roles`,
     availableRoles: `${EMPLOYEE_BFF}/proxy/user/users/roles`,
     settings: `${EMPLOYEE_BFF}/settings`,
+    deviceTokens: `${EMPLOYEE_BFF}/device-tokens`,
   },
 } as const

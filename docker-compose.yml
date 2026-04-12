@@ -229,6 +229,9 @@ services:
       - "8084:8084"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      FIREBASE_SERVICE_ACCOUNT_PATH: /app/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     depends_on:
       postgres-client-bff:
         condition: service_healthy
@@ -246,6 +249,9 @@ services:
       - "8085:8085"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      FIREBASE_SERVICE_ACCOUNT_PATH: /app/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     depends_on:
       postgres-employee-bff:
         condition: service_healthy

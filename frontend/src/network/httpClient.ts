@@ -1,6 +1,16 @@
 import axios from 'axios'
 import type { ErrorResponse } from '@/entities/common'
 import { useAuthStore } from '@/store/authStore'
+import { applyRetryInterceptor } from './retry'
+import { applyTracingInterceptor } from './tracing'
+import { applyIdempotencyInterceptor } from './idempotency'
+import {
+  resolveService,
+  canRequest,
+  recordSuccess,
+  recordFailure,
+  CircuitBreakerError,
+} from './circuitBreaker'
 
 export class ApiError extends Error {
   status: number
@@ -30,6 +40,13 @@ const httpClient = axios.create({
 const AUTH_URLS = ['/auth/oauth2/token', '/auth/userinfo', '/auth/api/v1/auth/register']
 const BFF_PREFIXES = ['/api/client', '/api/employee']
 
+// === 1. Idempotency keys (must be first — before retry duplicates the request) ===
+applyIdempotencyInterceptor(httpClient)
+
+// === 2. Tracing — adds X-Trace-Id header and measures duration ===
+applyTracingInterceptor(httpClient)
+
+// === 3. Auth token injection ===
 httpClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token && !config.url?.includes('/oauth2/token')) {
@@ -38,10 +55,41 @@ httpClient.interceptors.request.use((config) => {
   return config
 })
 
+// === 4. Circuit Breaker — check before sending ===
+httpClient.interceptors.request.use((config) => {
+  const service = resolveService(config.url ?? '')
+  if (!canRequest(service)) {
+    const error = new CircuitBreakerError(service)
+    return Promise.reject(error)
+  }
+  return config
+})
+
+// === 5. Response handling — circuit breaker recording + error mapping ===
 httpClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const service = resolveService(response.config.url ?? '')
+    recordSuccess(service)
+    return response
+  },
   (error: unknown) => {
+    if (error instanceof CircuitBreakerError) {
+      return Promise.reject(
+        new ApiError(503, 'CircuitBreakerOpen', error.message, new Date().toISOString()),
+      )
+    }
+
     if (axios.isAxiosError(error)) {
+      const service = resolveService(error.config?.url ?? '')
+      const status = error.response?.status ?? 0
+
+      // Record failure for 5xx and network errors
+      if (status >= 500 || status === 0) {
+        recordFailure(service)
+      } else {
+        recordSuccess(service)
+      }
+
       const requestUrl = error.config?.url ?? ''
       const isAuthUrl = AUTH_URLS.some((url) => requestUrl.includes(url))
 
@@ -75,5 +123,8 @@ httpClient.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+// === 6. Retry — must be last so it wraps everything above ===
+applyRetryInterceptor(httpClient)
 
 export { httpClient }

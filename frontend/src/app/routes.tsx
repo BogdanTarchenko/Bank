@@ -17,6 +17,7 @@ import { TariffsPage } from '@/pages/employee/TariffsPage'
 import { ClientCreditsPage } from '@/pages/employee/ClientCreditsPage'
 import { EmployeeSettingsPage } from '@/pages/employee/SettingsPage'
 import { ErrorPage } from '@/pages/ErrorPage'
+import { MonitoringPage } from '@/pages/MonitoringPage'
 import { ProtectedRoute } from './ProtectedRoute'
 
 export const router = createBrowserRouter([
@@ -65,6 +66,10 @@ export const router = createBrowserRouter([
           { path: 'accounts/:id', element: <AccountDetailPage /> },
           { path: 'settings', element: <EmployeeSettingsPage /> },
         ],
+      },
+      {
+        path: 'monitoring',
+        element: <MonitoringPage />,
       },
     ],
   },

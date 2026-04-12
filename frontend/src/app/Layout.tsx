@@ -27,10 +27,12 @@ import PeopleIcon from '@mui/icons-material/People'
 import CategoryIcon from '@mui/icons-material/Category'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart'
 import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { Theme, Role } from '@/entities/common'
 import { performLogout } from '@/usecases/authUseCases'
+import { useNotifications } from '@/shared/hooks/useNotifications'
 
 const DRAWER_WIDTH = 260
 
@@ -39,6 +41,7 @@ const clientMenuItems = [
   { label: 'Переводы', icon: <SwapHorizIcon />, path: '/client/transfers' },
   { label: 'Кредиты', icon: <CreditCardIcon />, path: '/client/credits' },
   { label: 'Настройки', icon: <SettingsIcon />, path: '/client/settings' },
+  { label: 'Мониторинг', icon: <MonitorHeartIcon />, path: '/monitoring' },
 ]
 
 const employeeMenuItems = [
@@ -46,6 +49,7 @@ const employeeMenuItems = [
   { label: 'Пользователи', icon: <PeopleIcon />, path: '/employee/users' },
   { label: 'Тарифы', icon: <CategoryIcon />, path: '/employee/tariffs' },
   { label: 'Настройки', icon: <SettingsIcon />, path: '/employee/settings' },
+  { label: 'Мониторинг', icon: <MonitorHeartIcon />, path: '/monitoring' },
 ]
 
 export function Layout() {
@@ -55,6 +59,9 @@ export function Layout() {
   const location = useLocation()
   const { user, activeRole, setActiveRole, hasRole } = useAuthStore()
   const { theme, setTheme } = useSettingsStore()
+
+  // Initialize push notifications
+  useNotifications()
 
   const menuItems = activeRole === 'employee' ? employeeMenuItems : clientMenuItems
   const canSwitchRole = hasRole(Role.CLIENT) && (hasRole(Role.EMPLOYEE) || hasRole(Role.ADMIN))
