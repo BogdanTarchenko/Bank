@@ -12,6 +12,7 @@ public final class OperationMapper {
         return new OperationResponse(
                 operation.getId(),
                 operation.getAccount().getId(),
+                operation.getAccount().getUserId(),
                 operation.getType(),
                 operation.getAmount(),
                 operation.getCurrency(),

@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public record OperationResponse(
         Long id,
         Long accountId,
+        Long userId,
         OperationType type,
         BigDecimal amount,
         Currency currency,
